@@ -132,6 +132,23 @@ def convert(converter_context, input_directory, output_directory):
         
         if route['VehicleTypeGroup'] == 'Bus':
             route_type = '3'
+        elif route['VehicleTypeGroup'] == 'U-Bahn':
+            route_type = '1'
+        elif route['VehicleTypeGroup'] == 'S-Bahn':
+            route_type = '2'
+        elif route['VehicleTypeGroup'] == 'R-Bahn':
+            route_type = '2'
+        elif route['VehicleTypeGroup'] == 'Tram':
+            route_type = '0'
+        elif route['VehicleTypeGroup'] == 'Zug':
+            route_type = '2'
+        elif route['VehicleTypeGroup'] == 'Fähre':
+            route_type = '4'
+        elif route['VehicleTypeGroup'] == 'Seilbahn':
+            route_type = '6'
+        else:
+            logging.warn(f"route type {route['VehicleTypeGroup']} not supported by GTFS - route type set to 0 (TRAM) for {route_id}")
+            route_type = '0'
             
         txt_routes.append([
             route_id,

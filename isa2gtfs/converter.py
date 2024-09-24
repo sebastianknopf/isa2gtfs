@@ -13,6 +13,9 @@ class IsaGtfsConverter:
         else:
             self._config = dict()
 
+            self._config['config'] = dict()
+            self._config['config']['extract_zone_ids'] = False
+
             self._config['default'] = dict()
             self._config['default']['agency_url'] = 'https://gtfs.org'
             self._config['default']['agency_timezone'] = 'Europe/Berlin'

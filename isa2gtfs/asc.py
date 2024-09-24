@@ -224,7 +224,6 @@ class AscFile:
             dimension_size = len(definition) - dimensions_index     
         
         for index, def_obj in enumerate(definition):
-            if index < len(row_data):
                 def_key = def_obj[0]
                 def_dtype = def_obj[1]
                 def_optional = def_obj[3]
@@ -252,7 +251,7 @@ class AscFile:
         
         if dtype == str:
             if not optional and val == '':
-                raise ValueError(f"column {def_key} must not be empty")
+                raise ValueError(f"column must not be empty")
             
             return val
         elif dtype == int:

@@ -14,6 +14,8 @@ def name2def(filename):
         return BITFIELD
     elif filename == 'HALTESTE':
         return STATIONS
+    elif filename == 'TARIF':
+        return FARES
     elif filename == 'BETRIEBE':
         return OPERATORS
     elif filename == 'BETRIEBSTEILE':
@@ -92,6 +94,21 @@ STATIONS = {
         'DATA': [
             'ID',
             'DelivererID'
+        ]
+    }
+}
+
+FARES = {
+    'DATA': [
+        ('StationID', int, 10, False),
+        ('DelivererID', str, 10, False),
+        ('Area', str, 10, True)
+    ],
+    'PRIMARY': {
+        'DATA': [
+            'StationID',
+            'DelivererID',
+            'Area'
         ]
     }
 }

@@ -14,7 +14,12 @@ _service_list = list()
 def convert(converter_context, input_directory, output_directory):
     # create stops.txt
     logging.info('loading HALTESTE.ASC ...')
-    asc_halteste = read_asc_file(os.path.join(input_directory, 'HALTESTE.ASC'))        
+    asc_halteste = read_asc_file(os.path.join(input_directory, 'HALTESTE.ASC'))  
+
+    if converter_context._config['config']['extract_zone_ids']:
+        logging.info('loading TARIF.ASC ...')
+        asc_tarif = read_asc_file(os.path.join(input_directory, 'TARIF.ASC'))
+
     logging.info(f"found {len(asc_halteste.records)} stations - converting now ...")
     
     txt_stops = list()
@@ -33,6 +38,7 @@ def convert(converter_context, input_directory, output_directory):
             
             location_type = '1'
             parent_station = ''
+            zone_id = ''
             
             # create and register dataset
             txt_stops.append([
@@ -41,7 +47,8 @@ def convert(converter_context, input_directory, output_directory):
                 stop_lat,
                 stop_lon,
                 location_type,
-                parent_station
+                parent_station,
+                zone_id
             ])
             
             _stop_id_map[station['ID']] = stop_id
@@ -64,6 +71,15 @@ def convert(converter_context, input_directory, output_directory):
             parent_station = converter_context._config['mapping']['station_id']
             parent_station = parent_station.replace('[stationInternationalId]', parent['InternationalStationID'])
             
+            if converter_context._config['config']['extract_zone_ids']:
+                zone_id_record = asc_tarif.find_record(station, ['ID', 'DelivererID'], ['StationID', 'DelivererID'])
+                if zone_id_record is not None:
+                    zone_id = zone_id_record['Area']
+                else:
+                    zone_id = ''
+            else:
+                zone_id = ''
+
             # create and register dataset
             txt_stops.append([
                 stop_id,
@@ -71,7 +87,8 @@ def convert(converter_context, input_directory, output_directory):
                 stop_lat,
                 stop_lon,
                 location_type,
-                parent_station
+                parent_station,
+                zone_id
             ])
             
             _stop_id_map[station['ID']] = stop_id
@@ -79,7 +96,7 @@ def convert(converter_context, input_directory, output_directory):
     logging.info('creating stops.txt ...')
     converter_context._write_txt_file(
         os.path.join(output_directory, 'stops.txt'),
-        ['stop_id', 'stop_name', 'stop_lat', 'stop_lon', 'location_type', 'parent_station'],
+        ['stop_id', 'stop_name', 'stop_lat', 'stop_lon', 'location_type', 'parent_station', 'zone_id'],
         txt_stops
     )
 

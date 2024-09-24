@@ -19,13 +19,13 @@ def convert(converter_context, input_directory, output_directory):
     
     txt_stops = list()
     for station in asc_halteste.records:
-        if station['GlobalID'] == '':
+        if station['InternationalStationID'] == '':
             logging.error(f"station {station['DelivererID']}-{station['ID']} has not assigned a international ID")
             return
     
-        if station['ParentID'] == '': # we have a parent station here 
-            stop_id = station['GlobalID']
-            stop_id = f"{stop_id}_Parent"
+        if station['ParentID'] == '': # we have a parent station here
+            stop_id = converter_context._config['mapping']['station_id']
+            stop_id = stop_id.replace('[stationInternationalId]', station['InternationalStationID'])
             
             stop_name = station['LongName']
             stop_lat = station['Latitude']
@@ -53,15 +53,16 @@ def convert(converter_context, input_directory, output_directory):
             if parent is None:
                 logging.error('could not find parent station')
             
-            stop_id = station['GlobalID']
+            stop_id = converter_context._config['mapping']['stop_id']
+            stop_id = stop_id.replace('[stopInternationalId]', station['InternationalStationID'])
             
             stop_name = parent['LongName']
             stop_lat = station['Latitude']
             stop_lon = station['Longitude']
             
             location_type = ''
-            parent_station = parent['GlobalID']
-            parent_station = f"{parent_station}_Parent"
+            parent_station = converter_context._config['mapping']['station_id']
+            parent_station = parent_station.replace('[stationInternationalId]', parent['InternationalStationID'])
             
             # create and register dataset
             txt_stops.append([
@@ -76,7 +77,7 @@ def convert(converter_context, input_directory, output_directory):
             _stop_id_map[station['ID']] = stop_id
             
     logging.info('creating stops.txt ...')
-    converter_context.write_txt_file(
+    converter_context._write_txt_file(
         os.path.join(output_directory, 'stops.txt'),
         ['stop_id', 'stop_name', 'stop_lat', 'stop_lon', 'location_type', 'parent_station'],
         txt_stops
@@ -85,6 +86,8 @@ def convert(converter_context, input_directory, output_directory):
     # create agency.txt
     logging.info('loading BETRIEBSTEILE.ASC ...')
     asc_betriebsteile = read_asc_file(os.path.join(input_directory, 'BETRIEBSTEILE.ASC'))
+    
+    logging.info('loading BETRIEBE.ASC ...')
     asc_betriebe = read_asc_file(os.path.join(input_directory, 'BETRIEBE.ASC'))
     logging.info(f"found {len(asc_betriebsteile.records)} operator organisations and {len(asc_betriebe.records)} operators - converting now ...")
     
@@ -92,12 +95,12 @@ def convert(converter_context, input_directory, output_directory):
     for operator_organisation in asc_betriebsteile.records:
         operator = asc_betriebe.find_record(operator_organisation, ['OperatorID'], ['ID'])
 
-        agency_id = operator['ID']
-        agency_id = f"vpe-{agency_id}"
+        agency_id = converter_context._config['mapping']['agency_id']
+        agency_id = agency_id.replace('[agencyId]', str(operator['ID']))
         
         agency_name = operator['Name']
-        agency_url = 'https://www.vpe.de'
-        agency_timezone = 'Europe/Berlin'
+        agency_url = converter_context._config['default']['agency_url']
+        agency_timezone = converter_context._config['default']['agency_timezone']
             
         txt_agencies.append([
             agency_id,
@@ -109,7 +112,7 @@ def convert(converter_context, input_directory, output_directory):
         _agency_id_map[operator_organisation['ID']] = agency_id
         
     logging.info('creating agency.txt ...')
-    converter_context.write_txt_file(
+    converter_context._write_txt_file(
         os.path.join(output_directory, 'agency.txt'),
         ['agency_id', 'agency_name', 'agency_url', 'agency_timezone'],
         txt_agencies
@@ -122,11 +125,13 @@ def convert(converter_context, input_directory, output_directory):
     
     txt_routes = list()
     for route in asc_linien.records:
-        if route['InternationalID'] == '':
+        if route['InternationalLineID'] == '':
             logging.error(f"route {route['OperatorOrganisationID']}-{route['LineNumber']} has not assigned an international ID")
             return
             
-        route_id = route['InternationalID']
+        route_id = converter_context._config['mapping']['route_id']
+        route_id = route_id.replace('[routeInternationalId]', route['InternationalLineID'])
+
         agency_id = _agency_id_map[route['OperatorOrganisationID']]
         route_short_name = route['Name']
         
@@ -147,7 +152,7 @@ def convert(converter_context, input_directory, output_directory):
         elif route['VehicleTypeGroup'] == 'Seilbahn':
             route_type = '6'
         else:
-            logging.warn(f"route type {route['VehicleTypeGroup']} not supported by GTFS - route type set to 0 (TRAM) for {route_id}")
+            logging.warning(f"route type {route['VehicleTypeGroup']} not supported by GTFS - route type set to 0 (TRAM) for {route_id}")
             route_type = '0'
             
         txt_routes.append([
@@ -160,7 +165,7 @@ def convert(converter_context, input_directory, output_directory):
         _route_id_map[route['LineNumber']] = route_id
         
     logging.info('creating routes.txt ...')
-    converter_context.write_txt_file(
+    converter_context._write_txt_file(
         os.path.join(output_directory, 'routes.txt'),
         ['route_id', 'agency_id', 'route_short_name', 'route_type'],
         txt_routes
@@ -225,12 +230,13 @@ def convert(converter_context, input_directory, output_directory):
                 if service_bitfield not in _service_list:
                     _service_list.append(service_bitfield)
 
-                service_id = f"vpe-service-{_service_list.index(service_bitfield)}"
+                service_id = converter_context._config['mapping']['service_id']
+                service_id = service_id.replace('[serviceId]', str(_service_list.index(service_bitfield)))
                 
-                if trip['InternationalTripID'] is not None and not trip['InternationalTripID'] == '':
-                    trip_id = trip['InternationalTripID']
-                else:
-                    trip_id = f"{route_id}vpe:{trip['ID']}"
+                trip_id = converter_context._config['mapping']['trip_id']
+                trip_id = trip_id.replace('[routeId]', route_id)
+                trip_id = trip_id.replace('[tripId]', trip['ID'])
+                trip_id = trip_id.replace('[tripInternationalId]', trip['InternationalTripID'])
 
                 trip_headsign = ''
                 trip_short_name = trip['ExternalTripNumber']
@@ -316,14 +322,14 @@ def convert(converter_context, input_directory, output_directory):
                 ])
 
     logging.info('creating trips.txt ...')
-    converter_context.write_txt_file(
+    converter_context._write_txt_file(
         os.path.join(output_directory, 'trips.txt'),
         ['route_id', 'service_id', 'trip_id', 'trip_headsign', 'trip_short_name', 'direction_id', 'block_id', 'shape_id', 'wheelchair_accessible', 'bikes_allowed'],
         txt_trips
     )
 
     logging.info('creating stop_times.txt ...')
-    converter_context.write_txt_file(
+    converter_context._write_txt_file(
         os.path.join(output_directory, 'stop_times.txt'),
         ['trip_id', 'arrival_time', 'departure_time', 'stop_id', 'stop_sequence', 'pickup_type', 'drop_off_type', 'shape_dist_travelled'],
         txt_stop_times
@@ -332,7 +338,8 @@ def convert(converter_context, input_directory, output_directory):
     # finally, create calendar_dates.txt out of bitfields
     txt_calendar_dates = list()
     for index, bitfield in enumerate(_service_list):
-        service_id = f"vpe-service-{index}"
+        service_id = converter_context._config['mapping']['service_id']
+        service_id = service_id.replace('[serviceId]', str(index))
                    
         for index, day in enumerate(_daterange(version_start_date, version_end_date)):                
             if bitfield[index] == '1':
@@ -346,7 +353,7 @@ def convert(converter_context, input_directory, output_directory):
                 ])
 
     logging.info('creating calendar_dates.txt ...')
-    converter_context.write_txt_file(
+    converter_context._write_txt_file(
         os.path.join(output_directory, 'calendar_dates.txt'),
         ['service_id', 'date', 'exception_type'],
         txt_calendar_dates

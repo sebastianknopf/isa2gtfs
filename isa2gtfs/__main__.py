@@ -12,8 +12,9 @@ logging.basicConfig(
 @click.command
 @click.option('--input', default='./input', help='input directory or ZIP file')
 @click.option('--output', default='./output', help='output directory or ZIP file')
-def main(input, output):
-    converter = IsaGtfsConverter()
+@click.option('--config', default=None, help='additional config file')
+def main(input, output, config):
+    converter = IsaGtfsConverter(config)
     converter.convert(input, output)
 
 if __name__ == '__main__':

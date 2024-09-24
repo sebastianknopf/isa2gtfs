@@ -86,7 +86,7 @@ STATIONS = {
         ('ExportFlag', str, 2, True),
         ('ItcsNumber', int, 10, True),
         ('LocationType', str, 1, True),
-        ('GlobalID', str, 60, True)
+        ('InternationalStationID', str, 60, True)
     ],
     'PRIMARY': {
         'DATA': [
@@ -139,7 +139,7 @@ LINES = {
         ('Name', str, 32, True),
         ('Type', str, 3, True),
         ('VehicleTypeGroup', str, 32, True),
-        ('InternationalID', str, 50, True),
+        ('InternationalLineID', str, 50, True),
         ('PseudoFlag', bool, 1, True),
         ('ExportNameFlag', bool, 1, True),
         ('TextColor', str, 6, True),

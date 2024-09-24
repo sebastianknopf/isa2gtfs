@@ -51,7 +51,7 @@ def convert(converter_context, input_directory, output_directory):
             # find parent station at first
             parent = asc_halteste.find_record(station, ['ParentID', 'ParentDelivererID'], ['ID', 'DelivererID'])
             if parent is None:
-                logging.error('could not find parent')
+                logging.error('could not find parent station')
             
             stop_id = station['GlobalID']
             
@@ -165,6 +165,138 @@ def convert(converter_context, input_directory, output_directory):
         ['route_id', 'agency_id', 'route_short_name', 'route_type'],
         txt_routes
     )
+
+    # create trips.txt and stop_times.txt
+
+    txt_trips = list()
+    txt_stop_times = list()
+    for route in asc_linien.records:
+
+        logging.info(f"loading FD{route['LineNumber']}.ASC ...")
+        asc_fdxxxxxx = read_asc_file(os.path.join(input_directory, f"FD{route['LineNumber']}.ASC"))
+
+        logging.info(f"loading LD{route['LineNumber']}.ASC ...")
+        asc_ldxxxxxx = read_asc_file(os.path.join(input_directory, f"LD{route['LineNumber']}.ASC"))
+
+        # process each trip of this line
+        for sub_line_index, sub_line in enumerate(asc_fdxxxxxx.headers):
+
+            logging.info(f"found LineNumber-LineVersionNumber-SubLineNumber-DirectionID ({sub_line['LineNumber']}-{sub_line['LineVersionNumber']}-{sub_line['SubLineNumber']}-{sub_line['DirectionID']}) - converting {sub_line['NumTrips']} trips now ...")
+        
+            ldxxxxxx_index, ldxxxxxx_header = asc_ldxxxxxx.find_header(
+                sub_line, 
+                ['LineNumber', 'LineVersionNumber', 'OperatorOrganisationID', 'DirectionID', 'SubLineNumber'],
+                ['LineNumber', 'LineVersionNumber', 'OperatorOrganisationID', 'DirectionID', 'SubLineNumber']
+            )
+
+            ldxxxxxx_records = asc_ldxxxxxx.records[ldxxxxxx_index]
+
+            # extract basic trip data 
+            for trip in asc_fdxxxxxx.records[sub_line_index]:
+                route_id = _route_id_map[route['LineNumber']]
+                service_id = 'NONE'
+                
+                if trip['InternationalTripID'] is not None and not trip['InternationalTripID'] == '':
+                    trip_id = trip['InternationalTripID']
+                else:
+                    trip_id = f"de:vpe:{trip['ID']}"
+
+                trip_headsign = ''
+                trip_short_name = trip['ExternalTripNumber']
+                direction_id = sub_line['DirectionID']
+
+                # empty default values
+                block_id = ''
+                shape_id = ''
+                wheelchair_accessible = ''
+                bikes_allowed = ''
+
+                # extract travel times from corresponding ldxxxxxx
+                time_demand_type_index = trip['TimeDemandType']
+                time_demand_type_index = int(time_demand_type_index) - 1
+                
+                last_departure_time = trip['StartTime']
+                last_stop_id = None
+                
+                for sub_line_item in ldxxxxxx_records:
+                    
+                    time_demand_type = sub_line_item['DIMENSIONS'][time_demand_type_index]
+
+                    travel_duration_seconds = _duration2seconds(time_demand_type['TravelTime'])
+                    waiting_duration_seconds = _duration2seconds(time_demand_type['WaitingTime'])
+
+                    arrival_time = last_departure_time
+                    departure_time = _datetime_add_seconds(arrival_time, waiting_duration_seconds)
+
+                    stop_id = _stop_id_map[sub_line_item['StopID']]
+                    stop_sequence = sub_line_item['ConsecutiveNumber']
+
+                    if time_demand_type['NoEntry'] == '1':
+                        pickup_type = '1'
+                    elif time_demand_type['DemandStop'] == '1':
+                        pickup_type = '3'
+                    else:
+                        pickup_type = '0'
+
+                    if time_demand_type['NoExit'] == '1':
+                        drop_off_type = '1'
+                    elif time_demand_type['DemandStop'] == '1':
+                        drop_off_type = '3'
+                    else:
+                        drop_off_type = '0'
+
+                    # empty default values
+                    shape_dist_travelled = '0'
+
+                    txt_stop_times.append([
+                        trip_id,
+                        arrival_time,
+                        departure_time,
+                        stop_id,
+                        stop_sequence,
+                        pickup_type,
+                        drop_off_type,
+                        shape_dist_travelled
+                    ])
+
+                    # set next travel time
+                    last_departure_time = _datetime_add_seconds(departure_time, travel_duration_seconds)
+                    last_stop_id = sub_line_item['StopID']
+
+                # add trip dataset after generating stop times
+                trip_headsign_stop = asc_halteste.find_record({'ID': last_stop_id}, ['ID'], ['ID'])
+                if trip_headsign_stop is not None:
+                    trip_headsign_station = asc_halteste.find_record(trip_headsign_stop, ['ParentID', 'ParentDelivererID'], ['ID', 'DelivererID'])
+                    if trip_headsign_station is not None:
+                        trip_headsign = trip_headsign_station['LongName']
+
+                txt_trips.append([
+                    route_id,
+                    service_id,
+                    trip_id,
+                    trip_headsign,
+                    trip_short_name,
+                    direction_id,
+                    block_id,
+                    shape_id,
+                    wheelchair_accessible,
+                    bikes_allowed
+                ])
+
+    logging.info('creating trips.txt ...')
+    converter_context.write_txt_file(
+        os.path.join(output_directory, 'trips.txt'),
+        ['route_id', 'service_id', 'trip_id', 'trip_headsign', 'trip_short_name', 'direction_id', 'block_id', 'shape_id', 'wheelchair_accessible', 'bikes_allowed'],
+        txt_trips
+    )
+
+    logging.info('creating stop_times.txt ...')
+    converter_context.write_txt_file(
+        os.path.join(output_directory, 'stop_times.txt'),
+        ['trip_id', 'arrival_time', 'departure_time', 'stop_id', 'stop_sequence', 'pickup_type', 'drop_off_type', 'shape_dist_travelled'],
+        txt_stop_times
+    )
+
     
     """# create calendar_dates.txt
     logging.info('loading VERSIONE.ASC ...')
@@ -207,12 +339,32 @@ def convert(converter_context, input_directory, output_directory):
         txt_calendar_dates
     )""" 
         
-def _daterange(self, start_date: date, end_date: date):
+def _daterange(start_date: date, end_date: date):
     days = int((end_date - start_date).days)
     for n in range(days):
         yield start_date + timedelta(n)
-            
-def _hex2bin(self, hexrepr):
+
+def _duration2seconds(input_string: str):
+    minutes, seconds = input_string.split(':')
+    minutes = int(minutes)
+    seconds = int(seconds)
+
+    return seconds + (minutes * 60)
+
+def _datetime_add_seconds(input_datetime, seconds):
+    input_datetime = input_datetime.replace('.', ':')
+    hours, rest = input_datetime.split(':', 1)
+
+    timestamp = timedelta(hours=int(hours)) + datetime.strptime(rest, "%M:%S")
+    timestamp = timestamp + timedelta(seconds=seconds)
+
+    remainder = int(int(hours) + (seconds / 60 / 60))
+    if remainder > 23:
+        return f"{remainder}:{timestamp.strftime('%M:%S')}"
+    else:
+        return timestamp.strftime('%H:%M:%S')
+
+def _hex2bin(hexrepr):
     byterepr = bytes.fromhex(hexrepr)
     bitrepr = ''
     for irepr in byterepr:

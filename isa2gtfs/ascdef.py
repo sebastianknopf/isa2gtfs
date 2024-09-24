@@ -287,7 +287,7 @@ FDXXXXXX = {
         ('DestinationStopID', int, 10, False),
         ('ArrivalTime', str, 6, True),
         ('VehicleTypeID', str, 10, True),
-        ('NumTimeDemandTypes', int, 3, False),
+        ('TimeDemandType', int, 3, False),
         ('ExternalTripNumber', str, 10, True),
         ('CalendarDayTypesTimetable', str, 7, True),
         ('NumFollowingTrips', int, 5, False),

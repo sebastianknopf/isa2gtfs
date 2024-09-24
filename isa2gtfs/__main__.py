@@ -1,6 +1,13 @@
 import click
+import logging
 
 from isa2gtfs.converter import IsaGtfsConverter
+
+logging.basicConfig(
+    level=logging.INFO, 
+    format= '[%(asctime)s] %(levelname)s: %(message)s',
+    datefmt='%H:%M:%S'
+)
 
 @click.command
 @click.option('--input', default='./input', help='input directory or ZIP file')

@@ -131,12 +131,23 @@ class AscFile:
                     
                     asc_writer.writerow(asc_values)  
             
+    def find_header(self, hdata, primary_key, foreign_key):
+        header_pkfields = self._create_compare_record(hdata, primary_key)
+
+        for index, header in enumerate(self.headers):
+            compare_header = self._create_compare_record(header, foreign_key)
+
+            if set(header_pkfields.values()) == set(compare_header.values()):
+                return index, header
+            
+        return -1, None
+    
     def find_record(self, rdata, primary_key, foreign_key):
         record_pkfields = self._create_compare_record(rdata, primary_key)
         
         for record in self.records:
             compare_record = self._create_compare_record(record, foreign_key)
-            if list(record_pkfields.values()) == list(compare_record.values()):
+            if set(record_pkfields.values()) == set(compare_record.values()):
                 return record
                 
         return None

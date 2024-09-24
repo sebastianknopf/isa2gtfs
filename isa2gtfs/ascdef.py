@@ -56,7 +56,7 @@ VERSIONS = {
 BITFIELD = {
     'DATA': [
         ('ID', int, 10, False),
-        ('BitField', str, 255, False)
+        ('Bitfield', str, 255, False)
     ],
     'PRIMARY': {
         'DATA': [

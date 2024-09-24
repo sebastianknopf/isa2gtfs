@@ -9,7 +9,7 @@ _stop_id_map = dict()
 _agency_id_map = dict()
 _route_id_map = dict()
 
-_service_id_map = dict()
+_service_list = list()
 
 def convert(converter_context, input_directory, output_directory):
     # create stops.txt
@@ -166,7 +166,20 @@ def convert(converter_context, input_directory, output_directory):
         txt_routes
     )
 
-    # create trips.txt and stop_times.txt
+    # create calendar_dates.txt, trips.txt and stop_times.txt
+    logging.info('loading VERSIONE.ASC ...')
+    asc_versione = read_asc_file(os.path.join(input_directory, 'VERSIONE.ASC'))
+    
+    if len(asc_versione.records) > 1:
+        logging.error('multiple versions found')
+    
+    version_start_date = datetime.strptime(asc_versione.records[0]['StartDate'], '%d.%m.%Y')
+    version_end_date = datetime.strptime(asc_versione.records[0]['EndDate'], '%d.%m.%Y')
+    
+    logging.info(f"version starts at {version_start_date.strftime('%Y-%m-%d')} and ends at {version_end_date.strftime('%Y-%m-%d')}")
+    
+    logging.info('loading BITFELD.ASC ...')
+    asc_bitfeld = read_asc_file(os.path.join(input_directory, 'BITFELD.ASC'))
 
     txt_trips = list()
     txt_stop_times = list()
@@ -191,19 +204,38 @@ def convert(converter_context, input_directory, output_directory):
 
             ldxxxxxx_records = asc_ldxxxxxx.records[ldxxxxxx_index]
 
+            # extract bitfield of line version
+            if ldxxxxxx_header['BitfieldID'] is not None and not ldxxxxxx_header['BitfieldID'] == '':
+                line_version_bitfield = asc_bitfeld.find_record({'ID': ldxxxxxx_header['BitfieldID']}, ['ID'], ['ID'])
+                line_version_bitfield = _hex2bin(line_version_bitfield['Bitfield'])
+            else:
+                line_version_bitfield = _hex2bin('F' * 250)
+
             # extract basic trip data 
             for trip in asc_fdxxxxxx.records[sub_line_index]:
                 route_id = _route_id_map[route['LineNumber']]
-                service_id = 'NONE'
+
+                # extract trip bitfield
+                trip_bitfield = asc_bitfeld.find_record({'ID': trip['BitfieldID']}, ['ID'], ['ID'])
+                trip_bitfield = _hex2bin(trip_bitfield['Bitfield'])
+
+                # determine service bitfield out of line version bitfield and trip bitfield
+                service_bitfield = _bitwise_and(line_version_bitfield, trip_bitfield)
+
+                if service_bitfield not in _service_list:
+                    _service_list.append(service_bitfield)
+
+                service_id = f"vpe-service-{_service_list.index(service_bitfield)}"
                 
                 if trip['InternationalTripID'] is not None and not trip['InternationalTripID'] == '':
                     trip_id = trip['InternationalTripID']
                 else:
-                    trip_id = f"de:vpe:{trip['ID']}"
+                    trip_id = f"{route_id}vpe:{trip['ID']}"
 
                 trip_headsign = ''
                 trip_short_name = trip['ExternalTripNumber']
-                direction_id = sub_line['DirectionID']
+
+                direction_id = str(int(sub_line['DirectionID']) - 1)
 
                 # empty default values
                 block_id = ''
@@ -215,7 +247,7 @@ def convert(converter_context, input_directory, output_directory):
                 time_demand_type_index = trip['TimeDemandType']
                 time_demand_type_index = int(time_demand_type_index) - 1
                 
-                last_departure_time = trip['StartTime']
+                last_departure_time = trip['StartTime'].replace('.', ':')
                 last_stop_id = None
                 
                 for sub_line_item in ldxxxxxx_records:
@@ -297,30 +329,13 @@ def convert(converter_context, input_directory, output_directory):
         txt_stop_times
     )
 
-    
-    """# create calendar_dates.txt
-    logging.info('loading VERSIONE.ASC ...')
-    asc_versione = read_asc_file(os.path.join(input_directory, 'VERSIONE.ASC'))
-    
-    if len(asc_versione.records) > 1:
-        logging.error('multiple versions found')
-    
-    version_start_date = datetime.strptime(asc_versione.records[0]['StartDate'], '%d.%m.%Y')
-    version_end_date = datetime.strptime(asc_versione.records[0]['EndDate'], '%d.%m.%Y')
-    
-    logging.info(f"version starts at {version_start_date.strftime('%Y-%m-%d')} and ends at {version_end_date.strftime('%Y-%m-%d')}")
-    
-    logging.info('loading BITFELD.ASC ...')
-    asc_bitfeld = read_asc_file(os.path.join(input_directory, 'BITFELD.ASC'))
-    logging.info(f"found {len(asc_bitfeld.records)} bitfields - converting now ...")
-    
+    # finally, create calendar_dates.txt out of bitfields
     txt_calendar_dates = list()
-    for bitfield in asc_bitfeld.records:
-        service_id = f"vpe-{bitfield['ID']}"
-        
-        bitfield_data = _hex2bin(bitfield['BitField'])            
+    for index, bitfield in enumerate(_service_list):
+        service_id = f"vpe-service-{index}"
+                   
         for index, day in enumerate(_daterange(version_start_date, version_end_date)):                
-            if bitfield_data[index] == '1':
+            if bitfield[index] == '1':
                 
                 exception_type = '1'
             
@@ -329,15 +344,13 @@ def convert(converter_context, input_directory, output_directory):
                     day.strftime('%Y%m%d'),
                     exception_type
                 ])
-                
-        _service_id_map[bitfield['ID']] = service_id
-        
+
     logging.info('creating calendar_dates.txt ...')
     converter_context.write_txt_file(
         os.path.join(output_directory, 'calendar_dates.txt'),
         ['service_id', 'date', 'exception_type'],
         txt_calendar_dates
-    )""" 
+    )
         
 def _daterange(start_date: date, end_date: date):
     days = int((end_date - start_date).days)
@@ -351,16 +364,17 @@ def _duration2seconds(input_string: str):
 
     return seconds + (minutes * 60)
 
-def _datetime_add_seconds(input_datetime, seconds):
+def _datetime_add_seconds(input_datetime, add_seconds):
     input_datetime = input_datetime.replace('.', ':')
-    hours, rest = input_datetime.split(':', 1)
+    hours, minutes, seconds = input_datetime.split(':')
 
-    timestamp = timedelta(hours=int(hours)) + datetime.strptime(rest, "%M:%S")
-    timestamp = timestamp + timedelta(seconds=seconds)
+    timestamp = timedelta(hours=int(hours)) + datetime.strptime(f"{minutes}:{seconds}", "%M:%S")
+    timestamp = timestamp + timedelta(seconds=add_seconds)
 
-    remainder = int(int(hours) + (seconds / 60 / 60))
-    if remainder > 23:
-        return f"{remainder}:{timestamp.strftime('%M:%S')}"
+    total_seconds = int(int(hours) * 3600 + int(minutes) * 60 + int(seconds) + add_seconds)
+    if total_seconds >= (24 * 60 * 60):
+        hours = int(total_seconds / 3600)
+        return f"{hours}:{timestamp.strftime('%M:%S')}"
     else:
         return timestamp.strftime('%H:%M:%S')
 
@@ -371,3 +385,16 @@ def _hex2bin(hexrepr):
         bitrepr = bitrepr + f'{irepr:08b}'
         
     return bitrepr
+
+def _bitwise_and(bitfield_a, bitfield_b):
+    if not len(bitfield_a) == len(bitfield_b):
+        raise ValueError(f"bitfield A and bitfield B must have exactly the same length")
+    
+    bitfield_r = ''
+    for i in range(0, len(bitfield_a)):
+        if bitfield_a[i] == '1' and bitfield_b[i] == '1':
+            bitfield_r = bitfield_r + '1'
+        else:
+            bitfield_r = bitfield_r + '0'
+
+    return bitfield_r

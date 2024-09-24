@@ -163,7 +163,7 @@ LINE_VERSION_ATTRIBUTES = {
         ('AttributeID', str, 10, False),
         ('Value', str, 511, True),
         ('BitfieldID', int, 10, True),
-        ('CalendarCode', str, 4, True)     
+        ('CalendarID', str, 4, True)     
     ],
     'PRIMARY': {
         'DATA': [

@@ -42,7 +42,7 @@ class AscFile:
         else:
             self._dimensions = None        
     
-        with open(self._filename, newline='') as asc_file:
+        with open(self._filename, newline='', encoding='ISO-8859-1') as asc_file:
             asc_reader = csv.reader(asc_file, delimiter='#', quotechar='"')
             
             ptr_header = 0
@@ -88,7 +88,7 @@ class AscFile:
         if filename == None:
             filename = self._filename
     
-        with open(filename, 'w', newline='') as asc_file:
+        with open(filename, 'w', newline='', encoding='ISO-8859-1') as asc_file:
             asc_writer = csv.writer(asc_file, delimiter='#', quotechar='"', lineterminator='#\n')
             
             if len(self.headers) > 0:

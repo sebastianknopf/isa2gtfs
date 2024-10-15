@@ -9,9 +9,12 @@ _stop_id_map = dict()
 _agency_id_map = dict()
 _route_id_map = dict()
 
+_version_map = dict()
+
 _service_list = list()
 
 def convert(converter_context, input_directory, output_directory):
+
     # create stops.txt
     logging.info('loading HALTESTE.ASC ...')
     asc_halteste = read_asc_file(os.path.join(input_directory, 'HALTESTE.ASC'))  
@@ -191,22 +194,35 @@ def convert(converter_context, input_directory, output_directory):
     # create calendar_dates.txt, trips.txt and stop_times.txt
     logging.info('loading VERSIONE.ASC ...')
     asc_versione = read_asc_file(os.path.join(input_directory, 'VERSIONE.ASC'))
+
+    for version in asc_versione.records:
+        _version_map[version['ID']] = (
+            datetime.strptime(version['StartDate'], '%d.%m.%Y'),
+            datetime.strptime(version['EndDate'], '%d.%m.%Y'),
+            version['BitfieldID']
+        )
+
+        if version['BitfieldID'] is None or version['BitfieldID'] == '':
+            base_version_start_date = datetime.strptime(version['StartDate'], '%d.%m.%Y')
+            base_version_end_date = datetime.strptime(version['EndDate'], '%d.%m.%Y')
     
-    if len(asc_versione.records) > 1:
-        logging.error('multiple versions found')
-    
-    version_start_date = datetime.strptime(asc_versione.records[0]['StartDate'], '%d.%m.%Y')
-    version_end_date = datetime.strptime(asc_versione.records[0]['EndDate'], '%d.%m.%Y')
-    
-    logging.info(f"version starts at {version_start_date.strftime('%Y-%m-%d')} and ends at {version_end_date.strftime('%Y-%m-%d')}")
+    logging.info(f"base version starts at {base_version_start_date.strftime('%Y-%m-%d')} and ends at {base_version_end_date.strftime('%Y-%m-%d')}")
     
     logging.info('loading BITFELD.ASC ...')
     asc_bitfeld = read_asc_file(os.path.join(input_directory, 'BITFELD.ASC'))
 
     txt_trips = list()
     txt_stop_times = list()
+    
+    processed_lines = list()
     for route in asc_linien.records:
 
+        # check whether this line number has already been processed - INIT writes the same line for each line version ...
+        line_identifier = f"{route['OperatorOrganisationID']}-{route['LineNumber']}"
+        if line_identifier in processed_lines:
+            continue
+
+        # beginn processing
         logging.info(f"loading FD{route['LineNumber']}.ASC ...")
         asc_fdxxxxxx = read_asc_file(os.path.join(input_directory, f"FD{route['LineNumber']}.ASC"))
 
@@ -227,8 +243,9 @@ def convert(converter_context, input_directory, output_directory):
             ldxxxxxx_records = asc_ldxxxxxx.records[ldxxxxxx_index]
 
             # extract bitfield of line version
-            if ldxxxxxx_header['BitfieldID'] is not None and not ldxxxxxx_header['BitfieldID'] == '':
-                line_version_bitfield = asc_bitfeld.find_record({'ID': ldxxxxxx_header['BitfieldID']}, ['ID'], ['ID'])
+            line_version_bitfield_id = _version_map[ldxxxxxx_header['LineVersionNumber']][2]
+            if line_version_bitfield_id is not None and not line_version_bitfield_id == '':
+                line_version_bitfield = asc_bitfeld.find_record({'ID': line_version_bitfield_id}, ['ID'], ['ID'])
                 line_version_bitfield = _hex2bin(line_version_bitfield['Bitfield'])
             else:
                 line_version_bitfield = _hex2bin('F' * 250)
@@ -338,6 +355,9 @@ def convert(converter_context, input_directory, output_directory):
                     bikes_allowed
                 ])
 
+        # mark line as processed 
+        processed_lines.append(line_identifier)
+
     logging.info('creating trips.txt ...')
     converter_context._write_txt_file(
         os.path.join(output_directory, 'trips.txt'),
@@ -358,7 +378,7 @@ def convert(converter_context, input_directory, output_directory):
         service_id = converter_context._config['mapping']['service_id']
         service_id = service_id.replace('[serviceId]', str(index))
                    
-        for index, day in enumerate(_daterange(version_start_date, version_end_date)):                
+        for index, day in enumerate(_daterange(base_version_start_date, base_version_end_date)):                
             if bitfield[index] == '1':
                 
                 exception_type = '1'

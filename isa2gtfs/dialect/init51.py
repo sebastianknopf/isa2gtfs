@@ -225,7 +225,13 @@ def convert(converter_context, input_directory, output_directory):
     txt_trips = list()
     txt_stop_times = list()
     
+    processed_lines = list()
     for route in asc_linien.records:
+
+        # check whether this line number has already been processed - INIT writes the same line for each line version ...
+        line_identifier = f"{route['OperatorOrganisationID']}-{route['LineNumber']}"
+        if line_identifier in processed_lines:
+            continue
 
         # beginn processing
         logging.info(f"loading FD{route['LineNumber']}.ASC ...")
@@ -359,6 +365,9 @@ def convert(converter_context, input_directory, output_directory):
                     wheelchair_accessible,
                     bikes_allowed
                 ])
+
+        # mark line as processed 
+        processed_lines.append(line_identifier)
 
     logging.info('creating trips.txt ...')
     converter_context._write_txt_file(

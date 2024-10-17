@@ -385,12 +385,12 @@ def convert(converter_context, input_directory, output_directory):
 
     # finally, create calendar_dates.txt out of bitfields
     txt_calendar_dates = list()
-    for index, bitfield in enumerate(_service_list):
+    for i, bitfield in enumerate(_service_list):
         service_id = converter_context._config['mapping']['service_id']
-        service_id = service_id.replace('[serviceId]', str(index))
+        service_id = service_id.replace('[serviceId]', str(i))
                    
-        for index, day in enumerate(_daterange(base_version_start_date, base_version_end_date)):                
-            if bitfield[index] == '1':
+        for c, day in enumerate(_daterange(base_version_start_date, base_version_end_date)):                
+            if bitfield[c] == '1':
                 
                 exception_type = '1'
             

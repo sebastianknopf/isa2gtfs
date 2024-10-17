@@ -272,6 +272,11 @@ def convert(converter_context, input_directory, output_directory):
                 # determine service bitfield out of line version bitfield and trip bitfield
                 service_bitfield = _bitwise_and(line_version_bitfield, trip_bitfield)
 
+                # line versioning can result in bitfields with zero days active - consider a trip only travelling a certain weekday and line version only valid for three other weekdays
+                # if we have such a trip ... skip it
+                if service_bitfield == _hex2bin('0' * 250):
+                    continue
+
                 if service_bitfield not in _service_list:
                     _service_list.append(service_bitfield)
 

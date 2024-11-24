@@ -319,16 +319,16 @@ def convert(converter_context, input_directory, output_directory):
                     stop_id = _stop_id_map[sub_line_item['StopID']]
                     stop_sequence = sub_line_item['ConsecutiveNumber']
 
-                    if time_demand_type['NoEntry'] == '1':
+                    if time_demand_type['NoEntry']:
                         pickup_type = '1'
-                    elif time_demand_type['DemandStop'] == '1':
+                    elif time_demand_type['DemandStop']:
                         pickup_type = '3'
                     else:
                         pickup_type = '0'
 
-                    if time_demand_type['NoExit'] == '1':
+                    if time_demand_type['NoExit']:
                         drop_off_type = '1'
-                    elif time_demand_type['DemandStop'] == '1':
+                    elif time_demand_type['DemandStop']:
                         drop_off_type = '3'
                     else:
                         drop_off_type = '0'

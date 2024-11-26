@@ -31,35 +31,35 @@ mapping:
 
 The configurations will take following effect:
 
-    - config.extract_zone_ids Whether to extract zone IDs and write them to zone_id in stops.txt or not
-    - default.agency_url Default URL for agencies, if no agency URL is available
-    - default.agency_timezone Default timezone for agencies, if no timezone is available
-    - mapping.station_id The template for generating station IDs (location type 1 in GTFS)
-    - mapping.stop_id The template for generating stop IDs (location type 0 or emtpy in GTFS)
-    - mapping.service_id The templatr for generating service IDs
-    - mapping.agency_id The template for generating agency IDs
-    - mapping.route_id The template for generating route IDs 
-    - mapping.trip_id The template for generating trip IDs
+- config.extract_zone_ids Whether to extract zone IDs and write them to zone_id in stops.txt or not
+- default.agency_url Default URL for agencies, if no agency URL is available
+- default.agency_timezone Default timezone for agencies, if no timezone is available
+- mapping.station_id The template for generating station IDs (location type 1 in GTFS)
+- mapping.stop_id The template for generating stop IDs (location type 0 or emtpy in GTFS)
+- mapping.service_id The templatr for generating service IDs
+- mapping.agency_id The template for generating agency IDs
+- mapping.route_id The template for generating route IDs 
+- mapping.trip_id The template for generating trip IDs
 
 All templates can use several placeholders in their context. Following placeholders are available:
 
-    - [stationId] for stations, maps to the internal station ID
-    - [stationInternationalId] for stations, maps to the international station ID (IFOPT)
-    - [stopId] for stops, maps to the internal stop ID
-    - [stopInternationalId] for stops, maps to the international stop ID (IFOPT)
-    - [agencyId] for agencies, maps to the internal agency ID
-    - [routeId] for lines, maps to the internal line or route ID
-    - [routeInternationalId] for lines, maps to the international line or route ID (DLID/DTID)
-    - [tripRouteId] for trips, maps to the corresponding route ID created previously of a trip
-    - [tripId] for trips, maps to the internal trip ID
-    - [tripInternationalId] for trips, maps to thr international trip ID (DFID)
+- [stationId] for stations, maps to the internal station ID
+- [stationInternationalId] for stations, maps to the international station ID (IFOPT)
+- [stopId] for stops, maps to the internal stop ID
+- [stopInternationalId] for stops, maps to the international stop ID (IFOPT)
+- [agencyId] for agencies, maps to the internal agency ID
+- [routeId] for lines, maps to the internal line or route ID
+- [routeInternationalId] for lines, maps to the international line or route ID (DLID/DTID)
+- [tripRouteId] for trips, maps to the corresponding route ID created previously of a trip
+- [tripId] for trips, maps to the internal trip ID
+- [tripInternationalId] for trips, maps to thr international trip ID (DFID)
 
 See the example above for an example configuration.
 
 ## Different Implementations
 Since data exchange interfaces provide many different ways to build up a data model, the exact data modelling can vary from system to system. Therefore, this converter is built upon so-called dialects which contain the exact converter implementation. Currently, there following dialects implemented:
 
-    - init51 - ISA 5.1 exported by MOBILE.PLAN (INIT) with support for line versions
+- init51 - ISA 5.1 exported by MOBILE.PLAN (INIT) with support for line versions
 
 If your desired dialect is missing here, feel free to open an issue or a PR with an implementation approach.
 

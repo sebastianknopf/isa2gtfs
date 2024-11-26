@@ -21,6 +21,7 @@ class IsaGtfsConverter:
             self._config['default'] = dict()
             self._config['default']['agency_url'] = 'https://gtfs.org'
             self._config['default']['agency_timezone'] = 'Europe/Berlin'
+            self._config['default']['agency_lang'] = 'de-DE'
 
             self._config['mapping'] = dict()
             self._config['mapping']['station_id'] = '[stationInternationalId]_Parent'

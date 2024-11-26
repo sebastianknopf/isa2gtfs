@@ -1,12 +1,13 @@
 config:
-  extract_zone_ids: true
+  extract_zone_ids: false
 default:
   agency_url: "https://gtfs.org"
   agency_timezone: "Europe/Berlin"
+  agency_lang: "de-DE"
 mapping:
   station_id: "[stationInternationalId]_Parent"
   stop_id: "[stopInternationalId]"
   service_id: "service-[serviceId]"
   agency_id: "agency-[agencyId]"
   route_id: "[routeInternationalId]"
-  trip_id: "[routeId][tripId]"
+  trip_id: "[tripRouteId][tripId]"

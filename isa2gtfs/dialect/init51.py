@@ -121,12 +121,14 @@ def convert(converter_context, input_directory, output_directory):
         agency_name = operator['Name']
         agency_url = converter_context._config['default']['agency_url']
         agency_timezone = converter_context._config['default']['agency_timezone']
+        agency_lang = converter_context._config['default']['agency_lang']
             
         txt_agencies.append([
             agency_id,
             agency_name,
             agency_url,
-            agency_timezone
+            agency_timezone,
+            agency_lang
         ])
         
         _agency_id_map[operator_organisation['ID']] = agency_id
@@ -134,7 +136,7 @@ def convert(converter_context, input_directory, output_directory):
     logging.info('creating agency.txt ...')
     converter_context._write_txt_file(
         os.path.join(output_directory, 'agency.txt'),
-        ['agency_id', 'agency_name', 'agency_url', 'agency_timezone'],
+        ['agency_id', 'agency_name', 'agency_url', 'agency_timezone', 'agency_lang'],
         txt_agencies
     )
     
@@ -284,7 +286,7 @@ def convert(converter_context, input_directory, output_directory):
                 service_id = service_id.replace('[serviceId]', str(_service_list.index(service_bitfield)))
                 
                 trip_id = converter_context._config['mapping']['trip_id']
-                trip_id = trip_id.replace('[routeId]', route_id)
+                trip_id = trip_id.replace('[tripRouteId]', route_id)
                 trip_id = trip_id.replace('[tripId]', trip['ID'])
                 trip_id = trip_id.replace('[tripInternationalId]', trip['InternationalTripID'])
 

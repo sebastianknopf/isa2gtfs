@@ -66,7 +66,7 @@ def convert(converter_context, input_directory, output_directory):
             stop_id = converter_context._config['mapping']['stop_id']
             stop_id = stop_id.replace('[stopInternationalId]', station['InternationalStationID'])
             
-            stop_name = parent['LongName']
+            stop_name = station['LongName']
             stop_lat = station['Latitude']
             stop_lon = station['Longitude']
             

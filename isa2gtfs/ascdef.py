@@ -8,12 +8,16 @@ def name2def(filename):
     filename = os.path.basename(filename)
     filename = filename.split('.')[0]
     
-    if filename == 'VERSIONE':
+    if filename == 'ATTRIBUT':
+        return ATTRIBUTES
+    elif filename == 'VERSIONE':
         return VERSIONS        
     elif filename == 'BITFELD':
         return BITFIELD
     elif filename == 'HALTESTE':
         return STATIONS
+    elif filename == 'HSTATTRI':
+        return STATION_ATTRIBUTES
     elif filename == 'TARIF':
         return FARES
     elif filename == 'BETRIEBE':
@@ -39,6 +43,18 @@ def name2def(filename):
     else:
         return None
 
+ATTRIBUTES = {
+    'DATA': [
+        ('ID', str, 10, False),
+        ('ShortName', str, 10, True),
+        ('IsMetaAttribute', bool, 10, False)
+    ],
+    'PRIMARY': {
+        'DATA': [
+            'ID'
+        ]
+    }
+}
 
 VERSIONS = {
     'DATA': [
@@ -89,6 +105,21 @@ STATIONS = {
         ('ItcsNumber', int, 10, True),
         ('LocationType', str, 1, True),
         ('InternationalStationID', str, 60, True)
+    ],
+    'PRIMARY': {
+        'DATA': [
+            'ID',
+            'DelivererID'
+        ]
+    }
+}
+
+STATION_ATTRIBUTES = {
+    'DATA': [
+        ('DelivererID', str, 10, False),
+        ('ID', int, 10, False),
+        ('AttributeID', str, 10, False),
+        ('AttributeValue', str, 511, True)
     ],
     'PRIMARY': {
         'DATA': [

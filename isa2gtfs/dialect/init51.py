@@ -15,7 +15,20 @@ _service_list = list()
 
 def convert(converter_context, input_directory, output_directory):
 
+    # load general attributes
+    logging.info('loading ATTRIBUT.ASC')
+    asc_attribut = read_asc_file(os.path.join(input_directory, 'ATTRIBUT.ASC'))
+
+    platform_code_attribute_id = asc_attribut.find_record({'ShortName': 'GLEIS'}, ['ShortName'],  ['ShortName'])
+    if platform_code_attribute_id is not None:
+        platform_code_attribute_id = platform_code_attribute_id['ID']
+    else:
+        logging.warning('could not determine platform_code attribute ID')
+
     # create stops.txt
+    logging.info('loading HSTATTRI.ASC ...')
+    asc_hstattri = read_asc_file(os.path.join(input_directory, 'HSTATTRI.ASC'))
+
     logging.info('loading HALTESTE.ASC ...')
     asc_halteste = read_asc_file(os.path.join(input_directory, 'HALTESTE.ASC'))  
 
@@ -42,6 +55,7 @@ def convert(converter_context, input_directory, output_directory):
             location_type = '1'
             parent_station = ''
             zone_id = ''
+            platform_code = ''
             
             # create and register dataset
             txt_stops.append([
@@ -51,7 +65,8 @@ def convert(converter_context, input_directory, output_directory):
                 stop_lon,
                 location_type,
                 parent_station,
-                zone_id
+                zone_id,
+                platform_code
             ])
             
             _stop_id_map[station['ID']] = stop_id
@@ -62,6 +77,17 @@ def convert(converter_context, input_directory, output_directory):
             parent = asc_halteste.find_record(station, ['ParentID', 'ParentDelivererID'], ['ID', 'DelivererID'])
             if parent is None:
                 logging.error('could not find parent station')
+
+            # find stop attribute for platform_code
+            if platform_code_attribute_id is not None:
+                platform_code_attribute = asc_hstattri.find_record({'ID': station['ID'], 'DelivererID': station['DelivererID'], 'AttributeID': platform_code_attribute_id}, ['ID', 'DelivererID', 'AttributeID'], ['ID', 'DelivererID', 'AttributeID'])
+                
+                if platform_code_attribute is not None:
+                    platform_code = platform_code_attribute['AttributeValue']
+                else:
+                    platform_code = ''
+            else:
+                platform_code = ''
             
             stop_id = converter_context._config['mapping']['stop_id']
             stop_id = stop_id.replace('[stopInternationalId]', station['InternationalStationID'])
@@ -91,7 +117,8 @@ def convert(converter_context, input_directory, output_directory):
                 stop_lon,
                 location_type,
                 parent_station,
-                zone_id
+                zone_id,
+                platform_code
             ])
             
             _stop_id_map[station['ID']] = stop_id
@@ -99,7 +126,7 @@ def convert(converter_context, input_directory, output_directory):
     logging.info('creating stops.txt ...')
     converter_context._write_txt_file(
         os.path.join(output_directory, 'stops.txt'),
-        ['stop_id', 'stop_name', 'stop_lat', 'stop_lon', 'location_type', 'parent_station', 'zone_id'],
+        ['stop_id', 'stop_name', 'stop_lat', 'stop_lon', 'location_type', 'parent_station', 'zone_id', 'platform_code'],
         txt_stops
     )
 

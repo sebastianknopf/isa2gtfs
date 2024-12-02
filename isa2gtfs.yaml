@@ -1,5 +1,6 @@
 config:
   extract_zone_ids: false
+  extract_platform_code: true
 default:
   agency_url: "https://gtfs.org"
   agency_timezone: "Europe/Berlin"

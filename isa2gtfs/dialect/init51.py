@@ -16,19 +16,22 @@ _service_list = list()
 def convert(converter_context, input_directory, output_directory):
 
     # load general attributes
-    logging.info('loading ATTRIBUT.ASC')
-    asc_attribut = read_asc_file(os.path.join(input_directory, 'ATTRIBUT.ASC'))
+    if converter_context._config['config']['extract_platform_codes']:
+        logging.info('loading ATTRIBUT.ASC')
+        asc_attribut = read_asc_file(os.path.join(input_directory, 'ATTRIBUT.ASC'))
 
-    platform_code_attribute_id = asc_attribut.find_record({'ShortName': 'GLEIS'}, ['ShortName'],  ['ShortName'])
-    if platform_code_attribute_id is not None:
-        platform_code_attribute_id = platform_code_attribute_id['ID']
+        platform_code_attribute_id = asc_attribut.find_record({'ShortName': 'GLEIS'}, ['ShortName'],  ['ShortName'])
+        if platform_code_attribute_id is not None:
+            platform_code_attribute_id = platform_code_attribute_id['ID']
+        else:
+            logging.warning('could not determine platform_code attribute ID')
+
+        logging.info('loading HSTATTRI.ASC ...')
+        asc_hstattri = read_asc_file(os.path.join(input_directory, 'HSTATTRI.ASC'))
     else:
-        logging.warning('could not determine platform_code attribute ID')
+        platform_code_attribute_id = None
 
     # create stops.txt
-    logging.info('loading HSTATTRI.ASC ...')
-    asc_hstattri = read_asc_file(os.path.join(input_directory, 'HSTATTRI.ASC'))
-
     logging.info('loading HALTESTE.ASC ...')
     asc_halteste = read_asc_file(os.path.join(input_directory, 'HALTESTE.ASC'))  
 

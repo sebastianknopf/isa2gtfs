@@ -15,7 +15,8 @@ By using an additional YAML file, you can set some preferences for the converter
 
 ```yaml
 config:
-  extract_zone_ids: true
+  extract_zone_ids: false
+  extract_platform_code: true
 default:
   agency_url: "https://gtfs.org"
   agency_timezone: "Europe/Berlin"
@@ -32,6 +33,7 @@ mapping:
 The configurations will take following effect:
 
 - config.extract_zone_ids Whether to extract zone IDs and write them to zone_id in stops.txt or not
+- config.extract_platform_codes Whether to extract platform codes from ATTRIBUT.ASC and HSTATTRI.ASC or not
 - default.agency_url Default URL for agencies, if no agency URL is available
 - default.agency_timezone Default timezone for agencies, if no timezone is available
 - mapping.station_id The template for generating station IDs (location type 1 in GTFS)

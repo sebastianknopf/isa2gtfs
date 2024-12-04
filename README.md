@@ -16,7 +16,7 @@ By using an additional YAML file, you can set some preferences for the converter
 ```yaml
 config:
   extract_zone_ids: false
-  extract_platform_code: true
+  extract_platform_codes: true
 default:
   agency_url: "https://gtfs.org"
   agency_timezone: "Europe/Berlin"

@@ -18,13 +18,26 @@ class IsaGtfsConverter:
             self._config['config'] = dict()
             self._config['config']['extract_zone_ids'] = False
             self._config['config']['extract_platform_codes'] = True
+            self._config['config']['generate_feed_info'] = True
+            self._config['config']['generate_feed_start_date'] = True
+            self._config['config']['generate_feed_end_date'] = True
+            self._config['config']['write_feed_id'] = False
 
             self._config['default'] = dict()
             self._config['default']['agency_url'] = 'https://gtfs.org'
             self._config['default']['agency_timezone'] = 'Europe/Berlin'
             self._config['default']['agency_lang'] = 'de-DE'
+            self._config['default']['feed_info'] = dict()
+            self._config['default']['feed_info']['feed_publisher_name'] = 'YourCompanyName'
+            self._config['default']['feed_info']['feed_publisher_url'] = 'https://yourdomain.dev'
+            self._config['default']['feed_info']['feed_contact_url'] = 'https://yourdomain.dev/contact'
+            self._config['default']['feed_info']['feed_contact_email'] = 'contact@yourdomain.dev'
+            self._config['default']['feed_info']['feed_version'] = '%Y%m%d%H%M%S'
+            self._config['default']['feed_info']['feed_lang'] = 'de-DE'
+            self._config['default']['feed_info']['default_lang'] = 'de-DE'
 
             self._config['mapping'] = dict()
+            self._config['mapping']['feed_id'] = 'COM'
             self._config['mapping']['station_id'] = '[stationInternationalId]_Parent'
             self._config['mapping']['stop_id'] = '[stopInternationalId]'
             self._config['mapping']['service_id'] = 'service-[serviceId]'

@@ -1,11 +1,24 @@
 config:
   extract_zone_ids: false
   extract_platform_codes: true
+  generate_feed_info: true
+  generate_feed_start_date: true
+  generate_feed_end_date: true
+  write_feed_id: false
 default:
   agency_url: "https://gtfs.org"
   agency_timezone: "Europe/Berlin"
   agency_lang: "de-DE"
+  feed_info:
+    feed_publisher_name: "YourCompanyName"
+    feed_publisher_url: "https://yourdomain.dev"
+    feed_contact_url: "https://yourdomain.dev/contact"
+    feed_contact_email: "contact@yourdomain.dev"
+    feed_version: "%Y%m%d%H%M%S"
+    feed_lang: "de-DE"
+    default_lang: "de-DE"
 mapping:
+  feed_id: "COM"
   station_id: "[stationInternationalId]_Parent"
   stop_id: "[stopInternationalId]"
   service_id: "service-[serviceId]"

@@ -420,7 +420,7 @@ def convert(converter_context, input_directory, output_directory):
         txt_stop_times
     )
 
-    # finally, create calendar_dates.txt out of bitfields
+    # create calendar_dates.txt out of bitfields
     txt_calendar_dates = list()
     for i, bitfield in enumerate(_service_list):
         service_id = converter_context._config['mapping']['service_id']
@@ -443,6 +443,39 @@ def convert(converter_context, input_directory, output_directory):
         ['service_id', 'date', 'exception_type'],
         txt_calendar_dates
     )
+
+    # finally, create feed_info if requested
+    if converter_context._config['config']['generate_feed_info']:
+        feed_info_headers = ['feed_publisher_name', 'feed_publisher_url', 'feed_contact_url', 'feed_contact_email', 'feed_lang', 'default_lang', 'feed_version']
+
+        feed_info_values = [[
+            converter_context._config['default']['feed_info']['feed_publisher_name'],
+            converter_context._config['default']['feed_info']['feed_publisher_url'],
+            converter_context._config['default']['feed_info']['feed_contact_url'],
+            converter_context._config['default']['feed_info']['feed_contact_email'],
+            converter_context._config['default']['feed_info']['feed_lang'],
+            converter_context._config['default']['feed_info']['default_lang'],
+            datetime.now().strftime(converter_context._config['default']['feed_info']['feed_version'])
+        ]]
+
+        if converter_context._config['config']['generate_feed_start_date']:
+            feed_info_headers.append('feed_start_date')
+            feed_info_values[0].append(base_version_start_date.strftime('%Y%m%d'))
+
+        if converter_context._config['config']['generate_feed_end_date']:
+            feed_info_headers.append('feed_end_date')
+            feed_info_values[0].append(base_version_end_date.strftime('%Y%m%d'))
+
+        if converter_context._config['config']['write_feed_id']:
+            feed_info_headers.append('feed_id')
+            feed_info_values[0].append(converter_context._config['mapping']['feed_id'])
+
+        logging.info('creating feed_info.txt ...')
+        converter_context._write_txt_file(
+            os.path.join(output_directory, 'feed_info.txt'),
+            feed_info_headers,
+            feed_info_values
+        )
         
 def _daterange(start_date: date, end_date: date):
     days = int((end_date - start_date).days)

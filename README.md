@@ -17,11 +17,24 @@ By using an additional YAML file, you can set some preferences for the converter
 config:
   extract_zone_ids: false
   extract_platform_codes: true
+  generate_feed_info: true
+  generate_feed_start_date: true
+  generate_feed_end_date: true
+  write_feed_id: false
 default:
   agency_url: "https://gtfs.org"
   agency_timezone: "Europe/Berlin"
   agency_lang: "de-DE"
+  feed_info:
+    feed_publisher_name: "YourCompanyName"
+    feed_publisher_url: "https://yourdomain.dev"
+    feed_contact_url: "https://yourdomain.dev/contact"
+    feed_contact_email: "contact@yourdomain.dev"
+    feed_version: "%Y%m%d%H%M%S"
+    feed_lang: "de-DE"
+    default_lang: "de-DE"
 mapping:
+  feed_id: "COM"
   station_id: "[stationInternationalId]_Parent"
   stop_id: "[stopInternationalId]"
   service_id: "service-[serviceId]"
@@ -34,8 +47,20 @@ The configurations will take following effect:
 
 - config.extract_zone_ids Whether to extract zone IDs and write them to zone_id in stops.txt or not
 - config.extract_platform_codes Whether to extract platform codes from ATTRIBUT.ASC and HSTATTRI.ASC or not
+- config.generate_feed_info Whether to generate the feed_info.txt file or not
+- config.generate_feed_start_date Whether to generate feed_start_date in feed_info.txt or not
+- config.generate_feed_end_date Whether to generate feed_end_date in feed_info.txt or not
+- config.write_feed_id Whether to write the column feed_id (unofficial!) in feed_info.txt or not; this column might be used by systems like OpenTripPlanner
 - default.agency_url Default URL for agencies, if no agency URL is available
 - default.agency_timezone Default timezone for agencies, if no timezone is available
+- default.feed_info.feed_publisher_name Feed publisher name for feed_info.txt
+- default.feed_info.feed_publisher_url Feed publisher URL for feed_info.txt
+- default.feed_info.feed_contact_url Feed contact URL for feed_info.txt; should point to a contact page
+- default.feed_info.feed_contact_email Feed contact email address for feed_info.txt; should point to a mail address which can be used for issue tracking
+- default.feed_info.feed_version Version template; the version is being generated based on the current date/time, the value must be a valid strftime format string
+- default.feed_info.feed_lang Feed language for feed_info.txt which is used as default language for agencies
+- default.feed_info.default_lang Feed language for feed_info.txt which ist used by the GTFS consumer if the the langauge of the rider is not known
+- mapping.feed_id The feed ID used in systems like OpenTripPlanner
 - mapping.station_id The template for generating station IDs (location type 1 in GTFS)
 - mapping.stop_id The template for generating stop IDs (location type 0 or emtpy in GTFS)
 - mapping.service_id The templatr for generating service IDs

@@ -8,8 +8,37 @@
             "name": "pyd: isa2gtfs",
             "type": "debugpy",
             "request": "launch",
+            "python": "${workspaceFolder}/venv/Scripts/python.exe",
             "module": "isa2gtfs",
-            "args":  ["-i ./../sampledata", "-o ./../sampledata"]
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "-i",
+                "${input:input}",
+                "-o",
+                "${input:output}",
+                "-c",
+                "${input:config}"
+            ]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "input",
+            "type": "promptString",
+            "description": "Input ZIP file or directory",
+            "default": "${workspaceFolder}/sampledata"
+        },
+        {
+            "id": "output",
+            "type": "promptString",
+            "description": "Output ZIP file or directory",
+            "default": "${workspaceFolder}/sampledata"
+        },
+        {
+            "id": "config",
+            "type": "promptString",
+            "description": "Configuration YAML file",
+            "default": "${workspaceFolder}/config.yaml"
         }
     ]
 }

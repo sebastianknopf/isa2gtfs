@@ -227,6 +227,7 @@ class AscFile:
                 def_key = def_obj[0]
                 def_dtype = def_obj[1]
                 def_optional = def_obj[3]
+                def_infinite = def_obj[4] if len(def_obj) == 5 else False
                 
                 if dimensions is not None and index >= dimensions_index:
                     if 'DIMENSIONS' not in entry:
@@ -242,7 +243,14 @@ class AscFile:
                             def_optional
                         )
                 else:
-                    entry[def_key] = self._read_value(row_data[index], def_dtype, def_optional)
+                    if def_infinite:
+                        for v in range(index, len(row_data) - 1):
+                            if def_key not in entry:
+                                entry[def_key] = self._read_value(row_data[v], def_dtype, def_optional)
+                            else:
+                                entry[def_key] = f"{entry[def_key]}#{self._read_value(row_data[v], def_dtype, def_optional)}"
+                    else:
+                        entry[def_key] = self._read_value(row_data[index], def_dtype, def_optional)
             
         return entry
         
@@ -270,7 +278,7 @@ class AscFile:
                 return float(val)
         elif dtype == bool:
             if not optional and val == '':
-                raise ValueError(f"column {def_key} must not be empty")
+                raise ValueError(f"column must not be empty")
                 
             return True if val == '1' else False
 

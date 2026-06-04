@@ -47,7 +47,8 @@ ATTRIBUTES: dict = {
     'DATA': [
         ('ID', str, 10, False),
         ('ShortName', str, 10, True),
-        ('IsMetaAttribute', bool, 10, False)
+        ('IsMetaAttribute', bool, 10, False),
+        ('Value', str, 1000, True, True)
     ],
     'PRIMARY': {
         'DATA': [

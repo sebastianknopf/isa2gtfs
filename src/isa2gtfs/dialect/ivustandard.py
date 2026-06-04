@@ -5,6 +5,7 @@ from datetime import datetime, date, timedelta
 
 from isa2gtfs.asc import read_asc_file
 
+_notice_id_map: dict[object, str] = dict()
 _stop_id_map: dict[object, str] = dict()
 _agency_id_map: dict[object, str] = dict()
 _route_id_map: dict[object, str] = dict()
@@ -38,6 +39,8 @@ def convert(converter_context: object, input_directory: str, output_directory: s
                 notice_group_id,
                 display_text
             ])
+
+            _notice_id_map[attribute['ID']] = notice_id
 
         converter_context._write_txt_file(
             os.path.join(output_directory, 'notices.txt'),

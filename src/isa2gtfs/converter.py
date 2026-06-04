@@ -6,14 +6,14 @@ import zipfile
 
 class IsaGtfsConverter:
 
-    def __init__(self, config_filename=None, dialect='init51'):
-        self._dialect = dialect
+    def __init__(self, config_filename: str | None = None, dialect: str = 'ivustandard') -> None:
+        self._dialect: str = dialect
         
         if config_filename is not None:
             with open(config_filename, 'r') as config_file:
-                self._config = yaml.safe_load(config_file)
+                self._config: dict = yaml.safe_load(config_file)
         else:
-            self._config = dict()
+            self._config: dict = dict()
 
             self._config['config'] = dict()
             self._config['config']['extract_zone_ids'] = False
@@ -21,7 +21,7 @@ class IsaGtfsConverter:
             self._config['config']['generate_feed_info'] = True
             self._config['config']['generate_feed_start_date'] = True
             self._config['config']['generate_feed_end_date'] = True
-            self._config['config']['write_feed_id'] = False
+            self._config['config']['generate_feed_id'] = False
 
             self._config['default'] = dict()
             self._config['default']['agency_url'] = 'https://gtfs.org'
@@ -45,19 +45,18 @@ class IsaGtfsConverter:
             self._config['mapping']['route_id'] = '[routeInternationalId]'
             self._config['mapping']['trip_id'] = '[routeId][tripId]'
 
-        self._txt_files = list()
+        self._txt_files: list[str] = list()
         
-    def convert(self, input, output):
-        
+    def convert(self, input: str, output: str) -> None:
         if input.endswith('.zip'):
-            input_directory = os.path.dirname(input)
+            input_directory: str = os.path.dirname(input)
         else:
-            input_directory = input
+            input_directory: str = input
 
         if output.endswith('.zip'):
-            output_directory = os.path.dirname(output)
+            output_directory: str = os.path.dirname(output)
         else:
-            output_directory = output
+            output_directory: str = output
         
         if input.endswith('.zip'):
             logging.info(f"unpacking ZIP archive {input} ...")
@@ -65,9 +64,9 @@ class IsaGtfsConverter:
             with zipfile.ZipFile(input, 'r') as zip_file:
                 zip_file.extractall(input_directory)
 
-        if self._dialect == 'init51':
-            from isa2gtfs.dialect import init51
-            init51.convert(self, input_directory, output_directory)
+        if self._dialect == 'ivustandard':
+            from isa2gtfs.dialect import ivustandard
+            ivustandard.convert(self, input_directory, output_directory)
         else:
             logging.error(f"unknown dialect {self._dialect}")
 
@@ -89,7 +88,7 @@ class IsaGtfsConverter:
                 if file.lower().endswith('.asc') or file.lower().endswith('.txt'):
                     os.remove(os.path.join(input_directory, file))
     
-    def _write_txt_file(self, txt_filename, txt_headers, txt_data):
+    def _write_txt_file(self, txt_filename: str, txt_headers: list[str], txt_data: list[list[object]]) -> None:
         self._txt_files.append(txt_filename)
         
         with open(txt_filename, 'w', newline='', encoding='utf-8') as txt_file:

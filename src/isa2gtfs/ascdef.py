@@ -4,8 +4,8 @@ import os
 # Definition of header and data lines in *.asc files.
 ########################################################################################################################
 
-def name2def(filename):
-    filename = os.path.basename(filename)
+def name2def(filename: str) -> dict | None:
+    filename: str = os.path.basename(filename)
     filename = filename.split('.')[0]
     
     if filename == 'ATTRIBUT':
@@ -43,7 +43,7 @@ def name2def(filename):
     else:
         return None
 
-ATTRIBUTES = {
+ATTRIBUTES: dict = {
     'DATA': [
         ('ID', str, 10, False),
         ('ShortName', str, 10, True),
@@ -56,7 +56,7 @@ ATTRIBUTES = {
     }
 }
 
-VERSIONS = {
+VERSIONS: dict = {
     'DATA': [
         ('ID', int, 10, False),
         ('Name', str, 60, False),
@@ -71,7 +71,7 @@ VERSIONS = {
     }
 }
 
-BITFIELD = {
+BITFIELD: dict = {
     'DATA': [
         ('ID', int, 10, False),
         ('Bitfield', str, 255, False)
@@ -83,7 +83,7 @@ BITFIELD = {
     }
 }
 
-STATIONS = {
+STATIONS: dict = {
     'DATA': [
         ('ID', int, 10, False),
         ('DelivererID', str, 10, False),
@@ -114,7 +114,7 @@ STATIONS = {
     }
 }
 
-STATION_ATTRIBUTES = {
+STATION_ATTRIBUTES: dict = {
     'DATA': [
         ('DelivererID', str, 10, False),
         ('ID', int, 10, False),
@@ -129,7 +129,7 @@ STATION_ATTRIBUTES = {
     }
 }
 
-FARES = {
+FARES: dict = {
     'DATA': [
         ('StationID', int, 10, False),
         ('DelivererID', str, 10, False),
@@ -144,7 +144,7 @@ FARES = {
     }
 }
 
-OPERATORS = {
+OPERATORS: dict = {
     'DATA': [
         ('ID', int, 10, False),
         ('OperatorNumber', int, 10, True),
@@ -162,7 +162,7 @@ OPERATORS = {
     }
 }
 
-OPERATOR_ORGANISATIONS = {
+OPERATOR_ORGANISATIONS: dict = {
     'DATA': [
         ('Code', str, 8, False),
         ('Name', str, 60, False),
@@ -180,7 +180,7 @@ OPERATOR_ORGANISATIONS = {
     }
 }
 
-LINES = {
+LINES: dict = {
     'DATA': [
         ('OperatorOrganisationID', str, 6, False),
         ('LineNumber', str, 32, False),
@@ -203,7 +203,7 @@ LINES = {
     }
 }
 
-LINE_VERSION_ATTRIBUTES = {
+LINE_VERSION_ATTRIBUTES: dict = {
     'DATA': [
         ('OperatorOrganisationID', str, 6, False),
         ('LineNumber', str, 8, False),
@@ -219,7 +219,7 @@ LINE_VERSION_ATTRIBUTES = {
     }
 }
 
-LDXXXXXX = {
+LDXXXXXX: dict = {
     'HEADER': [
         ('LineNumber', str, 32, False),
         ('LineVersionNumber', int, 10, False),
@@ -264,7 +264,7 @@ LDXXXXXX = {
     }
 }
 
-LFXXXXXX = {
+LFXXXXXX: dict = {
     'HEADER': [
         ('OperatorOrganisationID', str, 6, False),
         ('LineNumber', str, 32, False),
@@ -298,7 +298,7 @@ LFXXXXXX = {
     'INCREMENTOR': 'NumStops'
 }
 
-TRIP_ATTRIBUTES = {
+TRIP_ATTRIBUTES: dict = {
     'DATA': [
         ('OperatorOrganisationID', str, 6, False),
         ('LineNumber', str, 8, False),
@@ -318,7 +318,7 @@ TRIP_ATTRIBUTES = {
     }
 }
 
-FDXXXXXX = {
+FDXXXXXX: dict = {
     'HEADER': [
         ('LineNumber', str, 8, False),
         ('LineVersionNumber', int, 10, False),
@@ -360,7 +360,7 @@ FDXXXXXX = {
     'INCREMENTOR': 'NumTrips'
 }
 
-TIMETABLE = {
+TIMETABLE: dict = {
     'DATA': [
         ('ID', int, 10, False),
         ('DelivererID', str, 10, False),
@@ -381,7 +381,7 @@ TIMETABLE = {
     }
 }
 
-VEHICLE_TYPES = {
+VEHICLE_TYPES: dict = {
     'DATA': [
         ('ID', str, 10, False),
         ('VehicleTypeGroup', str, 32, True),

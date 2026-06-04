@@ -5,22 +5,22 @@ from datetime import datetime, date, timedelta
 
 from isa2gtfs.asc import read_asc_file
 
-_stop_id_map = dict()
-_agency_id_map = dict()
-_route_id_map = dict()
+_stop_id_map: dict[object, str] = dict()
+_agency_id_map: dict[object, str] = dict()
+_route_id_map: dict[object, str] = dict()
 
-_version_map = dict()
+_version_map: dict[object, tuple[datetime, datetime, object]] = dict()
 
-_service_list = list()
+_service_list: list[str] = list()
 
-def convert(converter_context, input_directory, output_directory):
+def convert(converter_context: object, input_directory: str, output_directory: str) -> None:
 
     # load general attributes
     if converter_context._config['config']['extract_platform_codes']:
         logging.info('loading ATTRIBUT.ASC')
         asc_attribut = read_asc_file(os.path.join(input_directory, 'ATTRIBUT.ASC'))
 
-        platform_code_attribute_id = asc_attribut.find_record({'ShortName': 'GLEIS'}, ['ShortName'],  ['ShortName'])
+        platform_code_attribute_id: object = asc_attribut.find_record({'ShortName': 'GLEIS'}, ['ShortName'],  ['ShortName'])
         if platform_code_attribute_id is not None:
             platform_code_attribute_id = platform_code_attribute_id['ID']
         else:
@@ -41,24 +41,24 @@ def convert(converter_context, input_directory, output_directory):
 
     logging.info(f"found {len(asc_halteste.records)} stations - converting now ...")
     
-    txt_stops = list()
+    txt_stops: list[list[object]] = list()
     for station in asc_halteste.records:
         if station['InternationalStationID'] == '':
             logging.error(f"station {station['DelivererID']}-{station['ID']} has not assigned a international ID")
             return
     
         if station['ParentID'] == '': # we have a parent station here
-            stop_id = converter_context._config['mapping']['station_id']
+            stop_id: str = converter_context._config['mapping']['station_id']
             stop_id = stop_id.replace('[stationInternationalId]', station['InternationalStationID'])
             
-            stop_name = station['LongName']
-            stop_lat = station['Latitude']
-            stop_lon = station['Longitude']
+            stop_name: object = station['LongName']
+            stop_lat: object = station['Latitude']
+            stop_lon: object = station['Longitude']
             
-            location_type = '1'
-            parent_station = ''
-            zone_id = ''
-            platform_code = ''
+            location_type: str = '1'
+            parent_station: str = ''
+            zone_id: str = ''
+            platform_code: str = ''
             
             # create and register dataset
             txt_stops.append([
@@ -141,17 +141,17 @@ def convert(converter_context, input_directory, output_directory):
     asc_betriebe = read_asc_file(os.path.join(input_directory, 'BETRIEBE.ASC'))
     logging.info(f"found {len(asc_betriebsteile.records)} operator organisations and {len(asc_betriebe.records)} operators - converting now ...")
     
-    txt_agencies = list()
+    txt_agencies: list[list[object]] = list()
     for operator_organisation in asc_betriebsteile.records:
         operator = asc_betriebe.find_record(operator_organisation, ['OperatorID'], ['ID'])
 
-        agency_id = converter_context._config['mapping']['agency_id']
+        agency_id: str = converter_context._config['mapping']['agency_id']
         agency_id = agency_id.replace('[agencyId]', str(operator['ID']))
         
-        agency_name = operator['Name']
-        agency_url = converter_context._config['default']['agency_url']
-        agency_timezone = converter_context._config['default']['agency_timezone']
-        agency_lang = converter_context._config['default']['agency_lang']
+        agency_name: object = operator['Name']
+        agency_url: str = converter_context._config['default']['agency_url']
+        agency_timezone: str = converter_context._config['default']['agency_timezone']
+        agency_lang: str = converter_context._config['default']['agency_lang']
             
         txt_agencies.append([
             agency_id,
@@ -175,13 +175,13 @@ def convert(converter_context, input_directory, output_directory):
     asc_linien = read_asc_file(os.path.join(input_directory, 'LINIEN.ASC'))
     logging.info(f"found {len(asc_linien.records)} routes - converting now ...")
     
-    txt_routes = list()
+    txt_routes: list[list[object]] = list()
 
-    processed_lines = list()
+    processed_lines: list[str] = list()
     for route in asc_linien.records:
 
         # check whether this line number has already been processed - INIT writes the same line for each line version ...
-        line_identifier = f"{route['OperatorOrganisationID']}-{route['LineNumber']}"
+        line_identifier: str = f"{route['OperatorOrganisationID']}-{route['LineNumber']}"
         if line_identifier in processed_lines:
             continue
 
@@ -189,11 +189,11 @@ def convert(converter_context, input_directory, output_directory):
             logging.error(f"route {route['OperatorOrganisationID']}-{route['LineNumber']} has not assigned an international ID")
             return
             
-        route_id = converter_context._config['mapping']['route_id']
+        route_id: str = converter_context._config['mapping']['route_id']
         route_id = route_id.replace('[routeInternationalId]', route['InternationalLineID'])
 
-        agency_id = _agency_id_map[route['OperatorOrganisationID']]
-        route_short_name = route['Name']
+        agency_id: str = _agency_id_map[route['OperatorOrganisationID']]
+        route_short_name: object = route['Name']
         
         if route['VehicleTypeGroup'] == 'Bus':
             route_type = '3'
@@ -254,8 +254,8 @@ def convert(converter_context, input_directory, output_directory):
     logging.info('loading BITFELD.ASC ...')
     asc_bitfeld = read_asc_file(os.path.join(input_directory, 'BITFELD.ASC'))
 
-    txt_trips = list()
-    txt_stop_times = list()
+    txt_trips: list[list[object]] = list()
+    txt_stop_times: list[list[object]] = list()
     
     processed_lines = list()
     for route in asc_linien.records:
@@ -283,7 +283,7 @@ def convert(converter_context, input_directory, output_directory):
                 ['LineNumber', 'LineVersionNumber', 'OperatorOrganisationID', 'DirectionID', 'SubLineNumber']
             )
 
-            ldxxxxxx_records = asc_ldxxxxxx.records[ldxxxxxx_index]
+            ldxxxxxx_records: list[dict] = asc_ldxxxxxx.records[ldxxxxxx_index]
 
             # extract bitfield of line version
             line_version_bitfield_id = _version_map[ldxxxxxx_header['LineVersionNumber']][2]
@@ -295,7 +295,7 @@ def convert(converter_context, input_directory, output_directory):
 
             # extract basic trip data 
             for trip in asc_fdxxxxxx.records[sub_line_index]:
-                route_id = _route_id_map[route['LineNumber']]
+                route_id: str = _route_id_map[route['LineNumber']]
 
                 # extract trip bitfield
                 trip_bitfield = asc_bitfeld.find_record({'ID': trip['BitfieldID']}, ['ID'], ['ID'])
@@ -312,31 +312,31 @@ def convert(converter_context, input_directory, output_directory):
                 if service_bitfield not in _service_list:
                     _service_list.append(service_bitfield)
 
-                service_id = converter_context._config['mapping']['service_id']
+                service_id: str = converter_context._config['mapping']['service_id']
                 service_id = service_id.replace('[serviceId]', str(_service_list.index(service_bitfield)))
                 
-                trip_id = converter_context._config['mapping']['trip_id']
+                trip_id: str = converter_context._config['mapping']['trip_id']
                 trip_id = trip_id.replace('[tripRouteId]', route_id)
                 trip_id = trip_id.replace('[tripId]', trip['ID'])
                 trip_id = trip_id.replace('[tripInternationalId]', trip['InternationalTripID'])
 
-                trip_headsign = ''
-                trip_short_name = trip['ExternalTripNumber']
+                trip_headsign: str = ''
+                trip_short_name: object = trip['ExternalTripNumber']
 
-                direction_id = str(int(sub_line['DirectionID']) - 1)
+                direction_id: str = str(int(sub_line['DirectionID']) - 1)
 
                 # empty default values
-                block_id = ''
-                shape_id = ''
-                wheelchair_accessible = ''
-                bikes_allowed = ''
+                block_id: str = ''
+                shape_id: str = ''
+                wheelchair_accessible: str = ''
+                bikes_allowed: str = ''
 
                 # extract travel times from corresponding ldxxxxxx
-                time_demand_type_index = trip['TimeDemandType']
+                time_demand_type_index: object = trip['TimeDemandType']
                 time_demand_type_index = int(time_demand_type_index) - 1
                 
-                last_departure_time = trip['StartTime'].replace('.', ':')
-                last_stop_id = None
+                last_departure_time: str = trip['StartTime'].replace('.', ':')
+                last_stop_id: object = None
                 
                 for sub_line_item in ldxxxxxx_records:
                     
@@ -345,11 +345,11 @@ def convert(converter_context, input_directory, output_directory):
                     travel_duration_seconds = _duration2seconds(time_demand_type['TravelTime'])
                     waiting_duration_seconds = _duration2seconds(time_demand_type['WaitingTime'])
 
-                    arrival_time = last_departure_time
-                    departure_time = _datetime_add_seconds(arrival_time, waiting_duration_seconds)
+                    arrival_time: str = last_departure_time
+                    departure_time: str = _datetime_add_seconds(arrival_time, waiting_duration_seconds)
 
-                    stop_id = _stop_id_map[sub_line_item['StopID']]
-                    stop_sequence = sub_line_item['ConsecutiveNumber']
+                    stop_id: str = _stop_id_map[sub_line_item['StopID']]
+                    stop_sequence: object = sub_line_item['ConsecutiveNumber']
 
                     if time_demand_type['NoEntry']:
                         pickup_type = '1'
@@ -366,7 +366,7 @@ def convert(converter_context, input_directory, output_directory):
                         drop_off_type = '0'
 
                     # empty default values
-                    shape_dist_travelled = '0'
+                    shape_dist_travelled: str = '0'
 
                     txt_stop_times.append([
                         trip_id,
@@ -421,15 +421,15 @@ def convert(converter_context, input_directory, output_directory):
     )
 
     # create calendar_dates.txt out of bitfields
-    txt_calendar_dates = list()
+    txt_calendar_dates: list[list[object]] = list()
     for i, bitfield in enumerate(_service_list):
-        service_id = converter_context._config['mapping']['service_id']
+        service_id: str = converter_context._config['mapping']['service_id']
         service_id = service_id.replace('[serviceId]', str(i))
                    
         for c, day in enumerate(_daterange(base_version_start_date, base_version_end_date)):                
             if bitfield[c] == '1':
                 
-                exception_type = '1'
+                exception_type: str = '1'
             
                 txt_calendar_dates.append([
                     service_id,
@@ -446,9 +446,9 @@ def convert(converter_context, input_directory, output_directory):
 
     # finally, create feed_info if requested
     if converter_context._config['config']['generate_feed_info']:
-        feed_info_headers = ['feed_publisher_name', 'feed_publisher_url', 'feed_contact_url', 'feed_contact_email', 'feed_lang', 'default_lang', 'feed_version']
+        feed_info_headers: list[str] = ['feed_publisher_name', 'feed_publisher_url', 'feed_contact_url', 'feed_contact_email', 'feed_lang', 'default_lang', 'feed_version']
 
-        feed_info_values = [[
+        feed_info_values: list[list[str]] = [[
             converter_context._config['default']['feed_info']['feed_publisher_name'],
             converter_context._config['default']['feed_info']['feed_publisher_url'],
             converter_context._config['default']['feed_info']['feed_contact_url'],
@@ -466,7 +466,7 @@ def convert(converter_context, input_directory, output_directory):
             feed_info_headers.append('feed_end_date')
             feed_info_values[0].append(base_version_end_date.strftime('%Y%m%d'))
 
-        if converter_context._config['config']['write_feed_id']:
+        if converter_context._config['config']['generate_feed_id']:
             feed_info_headers.append('feed_id')
             feed_info_values[0].append(converter_context._config['mapping']['feed_id'])
 
@@ -478,44 +478,44 @@ def convert(converter_context, input_directory, output_directory):
         )
         
 def _daterange(start_date: date, end_date: date):
-    days = int((end_date - start_date).days)
+    days: int = int((end_date - start_date).days)
     for n in range(days):
         yield start_date + timedelta(n)
 
-def _duration2seconds(input_string: str):
+def _duration2seconds(input_string: str) -> int:
     minutes, seconds = input_string.split(':')
     minutes = int(minutes)
     seconds = int(seconds)
 
     return seconds + (minutes * 60)
 
-def _datetime_add_seconds(input_datetime, add_seconds):
+def _datetime_add_seconds(input_datetime: str, add_seconds: int) -> str:
     input_datetime = input_datetime.replace('.', ':')
     hours, minutes, seconds = input_datetime.split(':')
 
     timestamp = timedelta(hours=int(hours)) + datetime.strptime(f"{minutes}:{seconds}", "%M:%S")
     timestamp = timestamp + timedelta(seconds=add_seconds)
 
-    total_seconds = int(int(hours) * 3600 + int(minutes) * 60 + int(seconds) + add_seconds)
+    total_seconds: int = int(int(hours) * 3600 + int(minutes) * 60 + int(seconds) + add_seconds)
     if total_seconds >= (24 * 60 * 60):
         hours = int(total_seconds / 3600)
         return f"{hours}:{timestamp.strftime('%M:%S')}"
     else:
         return timestamp.strftime('%H:%M:%S')
 
-def _hex2bin(hexrepr):
-    byterepr = bytes.fromhex(hexrepr)
-    bitrepr = ''
+def _hex2bin(hexrepr: str) -> str:
+    byterepr: bytes = bytes.fromhex(hexrepr)
+    bitrepr: str = ''
     for irepr in byterepr:
         bitrepr = bitrepr + f'{irepr:08b}'
         
     return bitrepr
 
-def _bitwise_and(bitfield_a, bitfield_b):
+def _bitwise_and(bitfield_a: str, bitfield_b: str) -> str:
     if not len(bitfield_a) == len(bitfield_b):
         raise ValueError(f"bitfield A and bitfield B must have exactly the same length")
     
-    bitfield_r = ''
+    bitfield_r: str = ''
     for i in range(0, len(bitfield_a)):
         if bitfield_a[i] == '1' and bitfield_b[i] == '1':
             bitfield_r = bitfield_r + '1'

@@ -207,5 +207,6 @@ pip-selfcheck.json
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,venv
 
 # Project Specific Stuff
-
+config.yaml
+src/isa2gtfs/version.py
 sampledata/*

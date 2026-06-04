@@ -13,8 +13,9 @@ logging.basicConfig(
 @click.option('--input', '-i', default='./input', help='input directory or ZIP file')
 @click.option('--output', '-o', default='./output', help='output directory or ZIP file')
 @click.option('--config', '-c', default=None, help='additional config file')
-def main(input, output, config):
-    converter = IsaGtfsConverter(config)
+@click.option('--dialect', '-d', default='ivustandard', help='name of the implementation used for conversion')
+def main(input: str, output: str, config: str | None, dialect: str) -> None:
+    converter: IsaGtfsConverter = IsaGtfsConverter(config, dialect)
     converter.convert(input, output)
 
 if __name__ == '__main__':

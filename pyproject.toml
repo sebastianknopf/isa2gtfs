@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "isa2gtfs"
+description = "Converter from ISA (IVU Standard ASCII) format to GTFS"
+authors = [{ name = "Sebastian Knopf", email = "mail@sebastian-knopf.de" }]
+readme = "README.md"
+license = {text = "Apache License (2.0)"}
+dependencies = [
+    "click",
+    "pyyaml"
+]
+requires-python = ">=3.10"
+
+dynamic = ["version"]
+
+[project.optional-dependencies]
+
+[tool.setuptools_scm]
+write_to = "src/isa2gtfs/version.py"

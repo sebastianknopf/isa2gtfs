@@ -49,6 +49,13 @@ class IsaGtfsConverter:
         
     def convert(self, input: str, output: str) -> None:
         
+        if self._dialect == 'ivustandard':
+            from isa2gtfs.dialect import ivustandard
+            ivustandard.convert(self, input_directory, output_directory)
+        else:
+            logging.error(f"unknown dialect {self._dialect}")
+            return
+        
         if input.endswith('.zip'):
             input_directory: str = os.path.dirname(input)
         else:
@@ -64,12 +71,6 @@ class IsaGtfsConverter:
 
             with zipfile.ZipFile(input, 'r') as zip_file:
                 zip_file.extractall(input_directory)
-
-        if self._dialect == 'ivustandard':
-            from isa2gtfs.dialect import ivustandard
-            ivustandard.convert(self, input_directory, output_directory)
-        else:
-            logging.error(f"unknown dialect {self._dialect}")
 
         if output.endswith('.zip'):
             logging.info(f"creating ZIP archive {output} ...")

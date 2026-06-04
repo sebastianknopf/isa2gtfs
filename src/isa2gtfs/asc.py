@@ -7,29 +7,29 @@ from isa2gtfs.ascdef import name2def
 # Helper class for reading and modifying *.asc files.
 ########################################################################################################################
 
-def read_asc_file(filename):
-    asc_file = AscFile()
+def read_asc_file(filename: str) -> "AscFile":
+    asc_file: AscFile = AscFile()
     asc_file.read(filename)
     
     return asc_file
     
     
-def create_asc_file(filename):
-    asc_file = AscFile(filename)
+def create_asc_file(filename: str) -> "AscFile":
+    asc_file: AscFile = AscFile(filename)
     
     return asc_file
 
 class AscFile:
 
-    def __init__(self, filename=None):
-        self.null_value = 'NULL'
-        self.strict = False
+    def __init__(self, filename: str | None = None) -> None:
+        self.null_value: str = 'NULL'
+        self.strict: bool = False
         
         self._internal_init()
 
-    def read(self, filename):
-        self._filename = filename
-        self._definition = name2def(os.path.basename(filename))
+    def read(self, filename: str) -> None:
+        self._filename: str | None = filename
+        self._definition: dict | None = name2def(os.path.basename(filename))
         
         if self._definition is None:
             pass
@@ -45,8 +45,8 @@ class AscFile:
         with open(self._filename, newline='', encoding='ISO-8859-1') as asc_file:
             asc_reader = csv.reader(asc_file, delimiter='#', quotechar='"')
             
-            ptr_header = 0
-            lst_record_group = None
+            ptr_header: int = 0
+            lst_record_group: list[dict] | None = None
             
             for index, asc_row in enumerate(asc_reader):
                 if 'HEADER' in self._definition:
@@ -59,7 +59,7 @@ class AscFile:
                         lst_record_group = list()
                         
                         # read header entry
-                        entry = self._read_entry(asc_row, self._definition['HEADER'])
+                        entry: dict = self._read_entry(asc_row, self._definition['HEADER'])
                         self.headers.append(entry)
                         
                         # check whether we're monitoring dimensions and update number of dimensions for the next subset
@@ -84,7 +84,7 @@ class AscFile:
                 self.records.append(lst_record_group)
                     
                         
-    def write(self, filename=None):
+    def write(self, filename: str | None = None) -> None:
         if filename == None:
             filename = self._filename
     
@@ -93,7 +93,7 @@ class AscFile:
             
             if len(self.headers) > 0:
                 for index, header in enumerate(self.headers):                
-                    asc_headers = list()
+                    asc_headers: list[str] = list()
                     for header_key, header_value in header.items():
                         def_dtype = self._definition['HEADER'][list(header.keys()).index(header_key)][1]
                         def_dlen = self._definition['HEADER'][list(header.keys()).index(header_key)][2]
@@ -103,7 +103,7 @@ class AscFile:
                     asc_writer.writerow(asc_headers)
                 
                     for record in self.records[index]:
-                        asc_values = list()
+                        asc_values: list[str] = list()
                         for record_key, record_value in record.items():
                             if record_key == 'DIMENSIONS':
                                 for dimension in record_value:
@@ -122,7 +122,7 @@ class AscFile:
                         asc_writer.writerow(asc_values)               
             else:
                 for record in self.records:
-                    asc_values = list()
+                    asc_values: list[str] = list()
                     for record_key, record_value in record.items():
                         def_dtype = self._definition['DATA'][list(record.keys()).index(record_key)][1]
                         def_dlen = self._definition['DATA'][list(record.keys()).index(record_key)][2]
@@ -131,8 +131,8 @@ class AscFile:
                     
                     asc_writer.writerow(asc_values)  
             
-    def find_header(self, hdata, primary_key, foreign_key):
-        header_pkfields = self._create_compare_record(hdata, primary_key)
+    def find_header(self, hdata: dict, primary_key: list[str], foreign_key: list[str]) -> tuple[int, dict | None]:
+        header_pkfields: dict = self._create_compare_record(hdata, primary_key)
 
         for index, header in enumerate(self.headers):
             compare_header = self._create_compare_record(header, foreign_key)
@@ -142,8 +142,8 @@ class AscFile:
             
         return -1, None
     
-    def find_record(self, rdata, primary_key, foreign_key):
-        record_pkfields = self._create_compare_record(rdata, primary_key)
+    def find_record(self, rdata: dict, primary_key: list[str], foreign_key: list[str]) -> dict | None:
+        record_pkfields: dict = self._create_compare_record(rdata, primary_key)
         
         for record in self.records:
             compare_record = self._create_compare_record(record, foreign_key)
@@ -152,7 +152,7 @@ class AscFile:
                 
         return None
     
-    def add_record(self, rdata, primary_key=None):
+    def add_record(self, rdata: dict, primary_key: list[str] | None = None) -> None:
         """record_existing = False
         record_pkfields = self._create_compare_record(rdata, primary_key)
         for i in range(len(self.records)):
@@ -165,7 +165,7 @@ class AscFile:
         if not record_existing:
             self.records.append(rdata)"""
             
-    def remove_records(self, rdata, primary_key=None):
+    def remove_records(self, rdata: dict, primary_key: list[str] | None = None) -> None:
         """updated_records = list()
         for i in range(len(self.records)):
             compare_record = self._create_compare_record(self.records[i], primary_key)
@@ -175,12 +175,12 @@ class AscFile:
                 
         self.records = updated_records"""
             
-    def replace_foreign_keys(self, foreign_key_columns, repl_map):
+    def replace_foreign_keys(self, foreign_key_columns: list[str], repl_map: dict[object, object]) -> None:
         for i in range(len(self.records)):
-            original_record = self.records[i]
-            updated_record = dict(original_record)
+            original_record: dict = self.records[i]
+            updated_record: dict = dict(original_record)
             
-            updated = False
+            updated: bool = False
             for fkc in foreign_key_columns:
                 if original_record[fkc] in repl_map:
                     updated_record[fkc] = repl_map[original_record[fkc]]
@@ -189,23 +189,23 @@ class AscFile:
             if updated:
                 self.records[i] = updated_record
             
-    def close(self):
+    def close(self) -> None:
         self._internal_init()
         
-    def _internal_init(self):
+    def _internal_init(self) -> None:
         
-        self._filename = None
-        self._definition = None
+        self._filename: str | None = None
+        self._definition: dict | None = None
         
-        self.headers = list()
-        self.records = list()
+        self.headers: list[dict] = list()
+        self.records: list[dict] | list[list[dict]] = list()
                           
             
-    def _create_value(self, val, dtype=str, dlen=0):            
+    def _create_value(self, val: object, dtype: type = str, dlen: int = 0) -> str:
         if dtype == bool:
-            value = '1' if val == True else '0'
+            value: str = '1' if val == True else '0'
         else:
-            value = str(val)
+            value: str = str(val)
         
         if not value == '':
             if dtype == int or dtype == float:
@@ -216,8 +216,8 @@ class AscFile:
         return value
             
 
-    def _read_entry(self, row_data, definition, dimensions=None):
-        entry = dict()
+    def _read_entry(self, row_data: list[str], definition: list[tuple], dimensions: dict | None = None) -> dict:
+        entry: dict = dict()
         
         if dimensions is not None:
             dimensions_index = [i for i, k in enumerate(definition) if k[0] == dimensions['REPEAT_FROM']][0]
@@ -246,8 +246,8 @@ class AscFile:
             
         return entry
         
-    def _read_value(self, val, dtype, optional):
-        val = val.strip()
+    def _read_value(self, val: str, dtype: type, optional: bool) -> str | int | float | bool:
+        val: str = val.strip()
         
         if dtype == str:
             if not optional and val == '':
@@ -274,9 +274,9 @@ class AscFile:
                 
             return True if val == '1' else False
 
-    def _create_compare_record(self, record, primary_key):
+    def _create_compare_record(self, record: dict, primary_key: list[str] | None) -> dict:
         if primary_key is not None:
-            compare_record = dict(record)
+            compare_record: dict = dict(record)
             for k in record:
                 if k not in primary_key:
                     del compare_record[k]

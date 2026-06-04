@@ -1,11 +1,12 @@
 # isa2gtfs
+[![Unit Tests](https://github.com/sebastianknopf/isa2gtfs/actions/workflows/unittests.yml/badge.svg)](https://github.com/sebastianknopf/isa2gtfs/actions/workflows/unittests.yml)
 This repository provides a lightweight converter for timetable information data in IVU Standard ASCII (ISA) format to GTFS. ISA is a data exchange format for timetable information data between different systems.
 
 ## Usage
 We recommend running the converter in a virtual environment with all dependencies installed. To run the converter, use the following command:
 
 ```shell
-python -m isa2gtfs -i ./input.zip -o ./output.zip [-c ./isa2gtfs.yaml]
+python -m isa2gtfs -i ./input.zip -o ./output.zip [-c ./isa2gtfs.yaml] [-d ivustandard]
 ```
 
 The file input.zip can be either a ZIP file or a directory containing your ISA input data. The output.zip can also be either a ZIP file or directory where the GTFS output files are written to. By specifying an additional config YAML file, you can modify the behaviour of the converter. See the next section for details.

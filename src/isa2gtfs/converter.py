@@ -6,7 +6,7 @@ import zipfile
 
 class IsaGtfsConverter:
 
-    def __init__(self, config_filename: str | None = None, dialect: str = 'init51') -> None:
+    def __init__(self, config_filename: str | None = None, dialect: str = 'ivustandard') -> None:
         self._dialect: str = dialect
         
         if config_filename is not None:
@@ -65,9 +65,9 @@ class IsaGtfsConverter:
             with zipfile.ZipFile(input, 'r') as zip_file:
                 zip_file.extractall(input_directory)
 
-        if self._dialect == 'init51':
-            from isa2gtfs.dialect import init51
-            init51.convert(self, input_directory, output_directory)
+        if self._dialect == 'ivustandard':
+            from isa2gtfs.dialect import ivustandard
+            ivustandard.convert(self, input_directory, output_directory)
         else:
             logging.error(f"unknown dialect {self._dialect}")
 

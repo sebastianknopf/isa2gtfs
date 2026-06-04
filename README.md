@@ -84,9 +84,7 @@ All templates can use several placeholders in their context. Following placehold
 - [tripInternationalId] for trips, maps to thr international trip ID (DFID)
 
 ## Different Implementations
-Since data exchange interfaces provide many different ways to build up a data model, the exact data modelling can vary from system to system. Therefore, this converter is built upon so-called dialects which contain the exact converter implementation. Currently, there following dialects implemented:
-
-- init51 - ISA 5.1 exported by MOBILE.PLAN (INIT) with support for line versions
+Currently, the converter supports only the converter for the standard exports of IVU Traffic Technologies planning software IVU.plan. Tests have shown, that also INIT's MOBILE.PLAN works fine. Custom implementation dialects can easily be added and integrated.
 
 If your desired dialect is missing here, feel free to open an issue or a PR with an implementation approach.
 

@@ -1,6 +1,7 @@
 config:
   extract_zone_ids: false
   extract_platform_codes: true
+  extract_notices: false
   generate_feed_info: true
   generate_feed_start_date: true
   generate_feed_end_date: true
@@ -25,3 +26,4 @@ mapping:
   agency_id: "agency-[agencyId]"
   route_id: "[routeInternationalId]"
   trip_id: "[tripRouteId][tripId]"
+  notice_id: "[noticeId]"

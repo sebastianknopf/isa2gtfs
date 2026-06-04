@@ -59,6 +59,7 @@ class IvuStandardConvertTests(unittest.TestCase):
         converter_context: mock.MagicMock = mock.MagicMock()
         converter_context._config = {
             'config': {
+                'extract_notices': False,
                 'extract_platform_codes': False,
                 'extract_zone_ids': False,
                 'generate_feed_info': False,
@@ -74,6 +75,7 @@ class IvuStandardConvertTests(unittest.TestCase):
                 'agency_id': 'agency-[agencyId]',
                 'route_id': '[routeInternationalId]',
                 'trip_id': '[routeId][tripId]',
+                'notice_id': '[noticeId]',
                 'feed_id': 'COM',
             },
         }

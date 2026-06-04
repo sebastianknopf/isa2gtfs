@@ -26,6 +26,21 @@ class AscTests(unittest.TestCase):
             self.assertEqual(asc_file.records[0]['ShortName'], 'GLEIS')
             self.assertTrue(asc_file.records[0]['IsMetaAttribute'])
 
+    def test_read_asc_file_supports_infinite_columns(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            asc_path: str = os.path.join(tmp_dir, 'ATTRIBUT.ASC')
+            with open(asc_path, 'w', encoding='ISO-8859-1') as handle:
+                # Trailing delimiter keeps csv parsing stable across platforms while
+                # allowing the infinite Value column to consume all content fragments.
+                handle.write('ID2#HIM#0#part1#part2#part3#\n')
+
+            asc_file: AscFile = read_asc_file(asc_path)
+
+            self.assertEqual(asc_file.records[0]['ID'], 'ID2')
+            self.assertEqual(asc_file.records[0]['ShortName'], 'HIM')
+            self.assertFalse(asc_file.records[0]['IsMetaAttribute'])
+            self.assertEqual(asc_file.records[0]['Value'], 'part1#part2#part3')
+
     def test_create_asc_file_sets_filename(self) -> None:
         asc_file: AscFile = create_asc_file('ATTRIBUT.ASC')
         self.assertIsNone(asc_file._filename)

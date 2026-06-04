@@ -16,9 +16,39 @@ _service_list: list[str] = list()
 def convert(converter_context: object, input_directory: str, output_directory: str) -> None:
 
     # load general attributes
-    if converter_context._config['config']['extract_platform_codes']:
-        logging.info('loading ATTRIBUT.ASC')
+    if converter_context._config['config']['extract_notices']:
+        logging.info('loading ATTRIBUT.ASC ...')
         asc_attribut = read_asc_file(os.path.join(input_directory, 'ATTRIBUT.ASC'))
+
+        logging.info(f"found {len(asc_attribut.records)} attributes - converting now ...")
+
+        txt_notices: list[list[object]] = list()
+        for attribute in asc_attribut.records:
+            
+            notice_id: str = converter_context._config['mapping']['notice_id']
+            notice_id = notice_id.replace('[noticeId]', attribute['ID'])
+
+            notice_group_id: str = ''
+
+            display_text: str = attribute['Value'].split('#')[1]
+
+            # create and register dataset
+            txt_notices.append([
+                notice_id,
+                notice_group_id,
+                display_text
+            ])
+
+        converter_context._write_txt_file(
+            os.path.join(output_directory, 'notices.txt'),
+            ['notice_id', 'notice_group_id', 'display_text'],
+            txt_notices
+        )
+    
+    if converter_context._config['config']['extract_platform_codes']:
+        if asc_attribut is None:
+            logging.info('loading ATTRIBUT.ASC')
+            asc_attribut = read_asc_file(os.path.join(input_directory, 'ATTRIBUT.ASC'))
 
         platform_code_attribute_id: object = asc_attribut.find_record({'ShortName': 'GLEIS'}, ['ShortName'],  ['ShortName'])
         if platform_code_attribute_id is not None:

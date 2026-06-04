@@ -20,6 +20,7 @@ By using an additional YAML file, you can set some preferences for the converter
 config:
   extract_zone_ids: false
   extract_platform_codes: true
+  extract_notices: false
   generate_feed_info: true
   generate_feed_start_date: true
   generate_feed_end_date: true
@@ -44,6 +45,7 @@ mapping:
   agency_id: "agency-[agencyId]"
   route_id: "[routeInternationalId]"
   trip_id: "[routeId][tripId]"
+  notice_id: "[noticeId]"
 ```
 
 The configurations will take following effect:
@@ -52,6 +54,7 @@ The configurations will take following effect:
 |---|---|
 | config.extract_zone_ids | Whether to extract zone IDs and write them to zone_id in stops.txt or not |
 | config.extract_platform_codes | Whether to extract platform codes from ATTRIBUT.ASC and HSTATTRI.ASC or not |
+| config.extract_notices | Whether to extract notices from ATTRIBUT.ASC, HSTATTRI.ASC, LVATTRIB.ASC and FAHRTATT.ASC or not |
 | config.generate_feed_info | Whether to generate the feed_info.txt file or not |
 | config.generate_feed_start_date | Whether to generate feed_start_date in feed_info.txt or not |
 | config.generate_feed_end_date | Whether to generate feed_end_date in feed_info.txt or not |
@@ -72,6 +75,7 @@ The configurations will take following effect:
 | mapping.agency_id | The template for generating agency IDs |
 | mapping.route_id | The template for generating route IDs |
 | mapping.trip_id | The template for generating trip IDs |
+| mapping.notice_id | The template for generating notice IDs |
 
 All templates can use several placeholders in their context. Following placeholders are available:
 

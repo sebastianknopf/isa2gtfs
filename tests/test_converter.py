@@ -20,6 +20,7 @@ class ConverterTests(unittest.TestCase):
 
         self.assertFalse(converter._config['config']['extract_zone_ids'])
         self.assertTrue(converter._config['config']['extract_platform_codes'])
+        self.assertFalse(converter._config['config']['extract_notices'])
         self.assertTrue(converter._config['config']['generate_feed_info'])
         self.assertTrue(converter._config['config']['generate_feed_start_date'])
         self.assertTrue(converter._config['config']['generate_feed_end_date'])
@@ -31,6 +32,7 @@ class ConverterTests(unittest.TestCase):
 
         self.assertEqual(converter._config['mapping']['feed_id'], 'COM')
         self.assertEqual(converter._config['mapping']['trip_id'], '[routeId][tripId]')
+        self.assertEqual(converter._config['mapping']['notice_id'], '[noticeId]')
 
     def test_write_txt_file_writes_csv(self) -> None:
         converter: IsaGtfsConverter = IsaGtfsConverter()

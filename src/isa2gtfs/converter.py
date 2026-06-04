@@ -18,6 +18,7 @@ class IsaGtfsConverter:
             self._config['config'] = dict()
             self._config['config']['extract_zone_ids'] = False
             self._config['config']['extract_platform_codes'] = True
+            self._config['config']['extract_notices'] = False
             self._config['config']['generate_feed_info'] = True
             self._config['config']['generate_feed_start_date'] = True
             self._config['config']['generate_feed_end_date'] = True
@@ -44,6 +45,7 @@ class IsaGtfsConverter:
             self._config['mapping']['agency_id'] = 'agency-[agencyId]'
             self._config['mapping']['route_id'] = '[routeInternationalId]'
             self._config['mapping']['trip_id'] = '[routeId][tripId]'
+            self._config['mapping']['notice_id'] = '[noticeId]'
 
         self._txt_files: list[str] = list()
         

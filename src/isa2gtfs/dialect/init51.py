@@ -466,7 +466,7 @@ def convert(converter_context, input_directory, output_directory):
             feed_info_headers.append('feed_end_date')
             feed_info_values[0].append(base_version_end_date.strftime('%Y%m%d'))
 
-        if converter_context._config['config']['write_feed_id']:
+        if converter_context._config['config']['generate_feed_id']:
             feed_info_headers.append('feed_id')
             feed_info_values[0].append(converter_context._config['mapping']['feed_id'])
 

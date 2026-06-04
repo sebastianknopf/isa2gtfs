@@ -21,7 +21,7 @@ class IsaGtfsConverter:
             self._config['config']['generate_feed_info'] = True
             self._config['config']['generate_feed_start_date'] = True
             self._config['config']['generate_feed_end_date'] = True
-            self._config['config']['write_feed_id'] = False
+            self._config['config']['generate_feed_id'] = False
 
             self._config['default'] = dict()
             self._config['default']['agency_url'] = 'https://gtfs.org'

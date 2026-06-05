@@ -9,6 +9,7 @@ _notice_id_map: dict[object, str] = dict()
 _stop_id_map: dict[object, str] = dict()
 _agency_id_map: dict[object, str] = dict()
 _route_id_map: dict[object, str] = dict()
+_trip_id_map: dict[object, str] = dict()
 
 _version_map: dict[object, tuple[datetime, datetime, object]] = dict()
 
@@ -167,9 +168,9 @@ def convert(converter_context: object, input_directory: str, output_directory: s
 
         # finally, find assignable notices here and assign them
         station_attributes: list = asc_hstattri.find_records({'ID': station['ID'], 'DelivererID': station['DelivererID']}, ['ID', 'DelivererID'])
-        for route_attribute in station_attributes:
-            if not route_attribute['AttributeID'] == platform_code_attribute_id:
-                notice_id: str = _notice_id_map[route_attribute['AttributeID']]
+        for trip_attribute in station_attributes:
+            if not trip_attribute['AttributeID'] == platform_code_attribute_id:
+                notice_id: str = _notice_id_map[trip_attribute['AttributeID']]
                 notice_group_id: str = ''
                 table_name: str = 'stops'
                 record_id: str = _stop_id_map[station['ID']]
@@ -292,9 +293,9 @@ def convert(converter_context: object, input_directory: str, output_directory: s
 
         # finally, find assignable notices here and assign them
         if converter_context._config['config']['extract_notices']:
-            route_attributes: list = asc_lvattrib.find_records({'OperatorOrganisationID': route['OperatorOrganisationID'], 'LineNumber': route['LineNumber']}, ['OperatorOrganisationID', 'LineNumber'])
-            for route_attribute in route_attributes:
-                notice_id: str = _notice_id_map[route_attribute['AttributeID']]
+            trip_attributes: list = asc_lvattrib.find_records({'OperatorOrganisationID': route['OperatorOrganisationID'], 'LineNumber': route['LineNumber']}, ['OperatorOrganisationID', 'LineNumber'])
+            for trip_attribute in trip_attributes:
+                notice_id: str = _notice_id_map[trip_attribute['AttributeID']]
                 notice_group_id: str = ''
                 table_name: str = 'routes'
                 record_id: str = _route_id_map[route['LineNumber']]
@@ -333,13 +334,16 @@ def convert(converter_context: object, input_directory: str, output_directory: s
     logging.info('loading BITFELD.ASC ...')
     asc_bitfeld = read_asc_file(os.path.join(input_directory, 'BITFELD.ASC'))
 
+    if converter_context._config['config']['extract_notices']:
+        asc_fahrtatt = read_asc_file(os.path.join(input_directory, 'FAHRTATT.ASC'))
+
     txt_trips: list[list[object]] = list()
     txt_stop_times: list[list[object]] = list()
     
     processed_lines = list()
     for route in asc_linien.records:
 
-        # check whether this line number has already been processed - INIT writes the same line for each line version ...
+        # check whether this line number has already been processed
         line_identifier = f"{route['OperatorOrganisationID']}-{route['LineNumber']}"
         if line_identifier in processed_lines:
             continue
@@ -481,6 +485,31 @@ def convert(converter_context: object, input_directory: str, output_directory: s
                     wheelchair_accessible,
                     bikes_allowed
                 ])
+
+                _trip_id_map[trip['ID']] = trip_id
+
+                # finally, find assignable notices here and assign them
+                if converter_context._config['config']['extract_notices']:
+                    trip_attributes: list = asc_fahrtatt.find_records({
+                        'OperatorOrganisationID': sub_line['OperatorOrganisationID'], 
+                        'LineNumber': route['LineNumber'],
+                        'DirectionID': sub_line['DirectionID'],
+                        'VersionNumber': sub_line['LineVersionNumber'],
+                        'InternalTripNumber': trip['ID']
+                    }, ['OperatorOrganisationID', 'LineNumber', 'DirectionID', 'VersionNumber', 'InternalTripNumber'])
+
+                    for trip_attribute in trip_attributes:
+                        notice_id: str = _notice_id_map[trip_attribute['AttributeID']]
+                        notice_group_id: str = ''
+                        table_name: str = 'trips'
+                        record_id: str = _trip_id_map[trip['ID']]
+                        
+                        txt_notice_assignments.append([
+                            notice_id,
+                            notice_group_id,
+                            table_name,
+                            record_id
+                        ])
 
         # mark line as processed 
         processed_lines.append(line_identifier)

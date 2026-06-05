@@ -24,6 +24,7 @@ def convert(converter_context: object, input_directory: str, output_directory: s
         logging.info(f"found {len(asc_attribut.records)} attributes - converting now ...")
 
         txt_notices: list[list[object]] = list()
+        txt_notice_assignments: list[list[object]] = list() # not used here, but later when defining other objects (stops, trips, routes, ...)
         for attribute in asc_attribut.records:
             
             notice_id: str = converter_context._config['mapping']['notice_id']
@@ -58,21 +59,26 @@ def convert(converter_context: object, input_directory: str, output_directory: s
             platform_code_attribute_id = platform_code_attribute_id['ID']
         else:
             logging.warning('could not determine platform_code attribute ID')
-
-        logging.info('loading HSTATTRI.ASC ...')
-        asc_hstattri = read_asc_file(os.path.join(input_directory, 'HSTATTRI.ASC'))
     else:
         platform_code_attribute_id = None
 
     # create stops.txt
     logging.info('loading HALTESTE.ASC ...')
-    asc_halteste = read_asc_file(os.path.join(input_directory, 'HALTESTE.ASC'))  
+    asc_halteste = read_asc_file(os.path.join(input_directory, 'HALTESTE.ASC'))
+
+    logging.info(f"found {len(asc_halteste.records)} stations - converting now ...")  
 
     if converter_context._config['config']['extract_zone_ids']:
         logging.info('loading TARIF.ASC ...')
         asc_tarif = read_asc_file(os.path.join(input_directory, 'TARIF.ASC'))
+    
+        logging.info(f"found {len(asc_tarif.records)} tariff assignments")
 
-    logging.info(f"found {len(asc_halteste.records)} stations - converting now ...")
+    if converter_context._config['config']['extract_platform_codes'] or converter_context._config['config']['extract_notices']:
+        logging.info('loading HSTATTRI.ASC ...')
+        asc_hstattri = read_asc_file(os.path.join(input_directory, 'HSTATTRI.ASC'))
+
+        logging.info(f"found {len(asc_hstattri.records)} station/stop attributes")
     
     txt_stops: list[list[object]] = list()
     for station in asc_halteste.records:
@@ -158,6 +164,23 @@ def convert(converter_context: object, input_directory: str, output_directory: s
             ])
             
             _stop_id_map[station['ID']] = stop_id
+
+        # finally, find assignable notices here and assign them
+        station_attributes: list = asc_hstattri.find_records({'ID': station['ID'], 'DelivererID': station['DelivererID']}, ['ID', 'DelivererID'])
+        for station_attribute in station_attributes:
+            if not station_attribute['AttributeID'] == platform_code_attribute_id:
+                notice_id: str = _notice_id_map[station_attribute['AttributeID']]
+                notice_group_id: str = ''
+                table_name: str = 'stops'
+                record_id: str = _stop_id_map[station['ID']]
+                
+                txt_notice_assignments.append([
+                    notice_id,
+                    notice_group_id,
+                    table_name,
+                    record_id
+                ])
+
             
     logging.info('creating stops.txt ...')
     converter_context._write_txt_file(
@@ -477,6 +500,15 @@ def convert(converter_context: object, input_directory: str, output_directory: s
         txt_calendar_dates
     )
 
+    # create notice_assignments.txt from assigned notices
+    if converter_context._config['config']['extract_notices']:
+        logging.info('creating notice_assignments.txt ...')
+        converter_context._write_txt_file(
+            os.path.join(output_directory, 'notice_assignments.txt'),
+            ['notice_id', 'notice_group_id', 'table_name', 'record_id'],
+            txt_notice_assignments
+        )
+    
     # finally, create feed_info if requested
     if converter_context._config['config']['generate_feed_info']:
         feed_info_headers: list[str] = ['feed_publisher_name', 'feed_publisher_url', 'feed_contact_url', 'feed_contact_email', 'feed_lang', 'default_lang', 'feed_version']
@@ -509,6 +541,8 @@ def convert(converter_context: object, input_directory: str, output_directory: s
             feed_info_headers,
             feed_info_values
         )
+
+    
         
 def _daterange(start_date: date, end_date: date):
     days: int = int((end_date - start_date).days)

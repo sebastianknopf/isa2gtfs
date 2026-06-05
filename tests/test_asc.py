@@ -86,6 +86,32 @@ class AscTests(unittest.TestCase):
         record: dict | None = asc_records.find_record({'ID': '2'}, ['ID'], ['ID'])
         self.assertEqual(record, {'ID': '2', 'Name': 'bar'})
 
+    def test_find_records_returns_all_matches(self) -> None:
+        asc_file: AscFile = AscFile()
+        asc_file.records = [
+            {'ID': '1', 'DelivererID': 'D1', 'Name': 'foo'},
+            {'ID': '1', 'DelivererID': 'D2', 'Name': 'bar'},
+            {'ID': '2', 'DelivererID': 'D1', 'Name': 'baz'},
+        ]
+
+        result: list[dict] | None = asc_file.find_records({'ID': '1'}, ['ID'])
+
+        self.assertIsNotNone(result)
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]['Name'], 'foo')
+        self.assertEqual(result[1]['Name'], 'bar')
+
+    def test_find_records_returns_empty_list_when_no_match(self) -> None:
+        asc_file: AscFile = AscFile()
+        asc_file.records = [
+            {'ID': '1', 'DelivererID': 'D1', 'Name': 'foo'},
+            {'ID': '2', 'DelivererID': 'D2', 'Name': 'bar'},
+        ]
+
+        result: list[dict] | None = asc_file.find_records({'ID': '3'}, ['ID'])
+
+        self.assertEqual(result, [])
+
     def test_replace_foreign_keys(self) -> None:
         asc_file: AscFile = AscFile()
         asc_file.records = [

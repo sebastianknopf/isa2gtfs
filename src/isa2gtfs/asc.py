@@ -152,6 +152,17 @@ class AscFile:
                 
         return None
     
+    def find_records(self, rdata: dict, key: list[str]) -> list[dict] | None:
+        record_pkfields: dict = self._create_compare_record(rdata, key)
+        
+        result: list[dict] = list()
+        for record in self.records:
+            compare_record = self._create_compare_record(record, key)
+            if set(record_pkfields.values()) == set(compare_record.values()):
+                result.append(record)
+                
+        return result
+    
     def add_record(self, rdata: dict, primary_key: list[str] | None = None) -> None:
         """record_existing = False
         record_pkfields = self._create_compare_record(rdata, primary_key)

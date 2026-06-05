@@ -261,8 +261,11 @@ class AscFile:
                             else:
                                 entry[def_key] = f"{entry[def_key]}#{self._read_value(row_data[v], def_dtype, def_optional)}"
                     else:
-                        entry[def_key] = self._read_value(row_data[index], def_dtype, def_optional)
-            
+                        if index < len(row_data):
+                            entry[def_key] = self._read_value(row_data[index], def_dtype, def_optional)
+                        else:
+                            entry[def_key] = None
+                                        
         return entry
         
     def _read_value(self, val: str, dtype: type, optional: bool) -> str | int | float | bool:

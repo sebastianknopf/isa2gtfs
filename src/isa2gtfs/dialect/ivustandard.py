@@ -167,9 +167,9 @@ def convert(converter_context: object, input_directory: str, output_directory: s
 
         # finally, find assignable notices here and assign them
         station_attributes: list = asc_hstattri.find_records({'ID': station['ID'], 'DelivererID': station['DelivererID']}, ['ID', 'DelivererID'])
-        for station_attribute in station_attributes:
-            if not station_attribute['AttributeID'] == platform_code_attribute_id:
-                notice_id: str = _notice_id_map[station_attribute['AttributeID']]
+        for route_attribute in station_attributes:
+            if not route_attribute['AttributeID'] == platform_code_attribute_id:
+                notice_id: str = _notice_id_map[route_attribute['AttributeID']]
                 notice_group_id: str = ''
                 table_name: str = 'stops'
                 record_id: str = _stop_id_map[station['ID']]
@@ -229,7 +229,14 @@ def convert(converter_context: object, input_directory: str, output_directory: s
     # create routes.txt
     logging.info('loading LINIEN.ASC ...')
     asc_linien = read_asc_file(os.path.join(input_directory, 'LINIEN.ASC'))
+    
     logging.info(f"found {len(asc_linien.records)} routes - converting now ...")
+
+    if converter_context._config['config']['extract_notices']:
+        logging.info('loading LVATTRIB.ASC ...')
+        asc_lvattrib = read_asc_file(os.path.join(input_directory, 'LVATTRIB.ASC'))
+
+        logging.info(f"found {len(asc_lvattrib.records)} line version attributes")
     
     txt_routes: list[list[object]] = list()
 
@@ -282,6 +289,22 @@ def convert(converter_context: object, input_directory: str, output_directory: s
 
         # mark line as processed 
         processed_lines.append(line_identifier)
+
+        # finally, find assignable notices here and assign them
+        if converter_context._config['config']['extract_notices']:
+            route_attributes: list = asc_lvattrib.find_records({'OperatorOrganisationID': route['OperatorOrganisationID'], 'LineNumber': route['LineNumber']}, ['OperatorOrganisationID', 'LineNumber'])
+            for route_attribute in route_attributes:
+                notice_id: str = _notice_id_map[route_attribute['AttributeID']]
+                notice_group_id: str = ''
+                table_name: str = 'routes'
+                record_id: str = _route_id_map[route['LineNumber']]
+                
+                txt_notice_assignments.append([
+                    notice_id,
+                    notice_group_id,
+                    table_name,
+                    record_id
+                ])
         
     logging.info('creating routes.txt ...')
     converter_context._write_txt_file(

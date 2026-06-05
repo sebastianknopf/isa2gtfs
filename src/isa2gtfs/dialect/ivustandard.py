@@ -334,11 +334,14 @@ def convert(converter_context: object, input_directory: str, output_directory: s
     logging.info('loading BITFELD.ASC ...')
     asc_bitfeld = read_asc_file(os.path.join(input_directory, 'BITFELD.ASC'))
 
-    if converter_context._config['config']['extract_notices']:
-        asc_fahrtatt = read_asc_file(os.path.join(input_directory, 'FAHRTATT.ASC'))
-
     txt_trips: list[list[object]] = list()
     txt_stop_times: list[list[object]] = list()
+
+    if converter_context._config['config']['extract_notices']:
+        logging.info('loading FAHRTATT.ASC ...')
+        asc_fahrtatt = read_asc_file(os.path.join(input_directory, 'FAHRTATT.ASC'))
+
+        txt_trip_segments: list[list[object]] = list()
     
     processed_lines = list()
     for route in asc_linien.records:
@@ -494,22 +497,49 @@ def convert(converter_context: object, input_directory: str, output_directory: s
                         'OperatorOrganisationID': sub_line['OperatorOrganisationID'], 
                         'LineNumber': route['LineNumber'],
                         'DirectionID': sub_line['DirectionID'],
-                        'VersionNumber': sub_line['LineVersionNumber'],
-                        'InternalTripNumber': trip['ID']
-                    }, ['OperatorOrganisationID', 'LineNumber', 'DirectionID', 'VersionNumber', 'InternalTripNumber'])
+                        'LineVersionNumber': sub_line['LineVersionNumber'],
+                        'TripID': trip['ID']
+                    }, ['OperatorOrganisationID', 'LineNumber', 'DirectionID', 'LineVersionNumber', 'TripID'])
 
                     for trip_attribute in trip_attributes:
-                        notice_id: str = _notice_id_map[trip_attribute['AttributeID']]
-                        notice_group_id: str = ''
-                        table_name: str = 'trips'
-                        record_id: str = _trip_id_map[trip['ID']]
-                        
-                        txt_notice_assignments.append([
-                            notice_id,
-                            notice_group_id,
-                            table_name,
-                            record_id
-                        ])
+                        if trip_attribute['StartStopSequence'] == '' and trip_attribute['EndStopSequence'] == '':
+                            notice_id: str = _notice_id_map[trip_attribute['AttributeID']]
+                            notice_group_id: str = ''
+                            table_name: str = 'trips'
+                            record_id: str = _trip_id_map[trip['ID']]
+                            
+                            txt_notice_assignments.append([
+                                notice_id,
+                                notice_group_id,
+                                table_name,
+                                record_id
+                            ])
+                        else:
+                            # generate trip segment
+                            trip_segment_from_stop_sequence: str = trip_attribute['StartStopSequence']
+                            trip_segment_to_stop_sequence: str = trip_attribute['EndStopSequence']
+                            trip_segment_id: str = f"{_trip_id_map[trip['ID']]}:{trip_segment_from_stop_sequence}-{trip_segment_to_stop_sequence}"
+
+                            txt_trip_segments.append([
+                                trip_segment_id,
+                                trip_id,
+                                trip_segment_from_stop_sequence,
+                                trip_segment_to_stop_sequence
+                            ])
+
+                            # assign notice to trip segment
+                            notice_id: str = _notice_id_map[trip_attribute['AttributeID']]
+                            notice_group_id: str = ''
+                            table_name: str = 'trip_segments'
+                            record_id: str = trip_segment_id
+                            
+                            txt_notice_assignments.append([
+                                notice_id,
+                                notice_group_id,
+                                table_name,
+                                record_id
+                            ])
+
 
         # mark line as processed 
         processed_lines.append(line_identifier)
@@ -520,6 +550,14 @@ def convert(converter_context: object, input_directory: str, output_directory: s
         ['route_id', 'service_id', 'trip_id', 'trip_headsign', 'trip_short_name', 'direction_id', 'block_id', 'shape_id', 'wheelchair_accessible', 'bikes_allowed'],
         txt_trips
     )
+
+    if converter_context._config['config']['extract_notices']:
+        logging.info('creating trips_segments.txt ...')
+        converter_context._write_txt_file(
+            os.path.join(output_directory, 'trip_segments.txt'),
+            ['trip_segment_id', 'trip_id', 'trip_id', 'from_stop_sequence', 'to_stop_sequence'],
+            txt_trip_segments
+        )
 
     logging.info('creating stop_times.txt ...')
     converter_context._write_txt_file(
